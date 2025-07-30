@@ -12,3 +12,4 @@ windows-sys = { version = "0.60.2", features = [
     "Win32_Storage",
     "Win32_Storage_FileSystem"
 ] }
+libc = "0.2"
