@@ -2,12 +2,21 @@ use std::fmt;
 
 #[derive(Debug)]
 pub enum Instr {
-    LoadI64(i64, u64),    // LoadI64(value, dst)
-    LoadF64(f64, u64),    // LoadF64(value, dst)
-    Add(u64, u64, u64),   // Add(r1, r2, dst)
-    Sub(u64, u64, u64),   // Sub(r1, r2, dst)
-    Mul(u64, u64, u64),   // Mul(r1, r2, dst)
-    Gt(u64, u64, u64),    // Gt(r1, r2, dst) → dst = 1 if r1 > r2 else 0
+    LoadI64(i64, u64), // LoadI64(value, dst)
+    LoadF64(f64, u64), // LoadF64(value, dst)
+
+    // Separate i64 operations
+    AddI64(u64, u64, u64), // AddI64(r1, r2, dst)
+    SubI64(u64, u64, u64), // SubI64(r1, r2, dst)
+    MulI64(u64, u64, u64), // MulI64(r1, r2, dst)
+    GtI64(u64, u64, u64),  // GtI64(r1, r2, dst) → dst = 1 if r1 > r2 else 0
+
+    // Separate f64 operations
+    AddF64(u64, u64, u64), // AddF64(r1, r2, dst)
+    SubF64(u64, u64, u64), // SubF64(r1, r2, dst)
+    MulF64(u64, u64, u64), // MulF64(r1, r2, dst)
+    GtF64(u64, u64, u64),  // GtF64(r1, r2, dst) → dst = 1 if r1 > r2 else 0
+
     JmpIfFalse(u64, u64), // If regs[cond] == 0 → pc = target
     Jmp(u64),             // Unconditional jump
     I64ToF64(u64, u64),   // Convert i64 to f64 (src, dst)
@@ -69,64 +78,51 @@ impl VirtualMachine {
             Instr::LoadF64(val, dst) => {
                 self.set_f64(*dst, *val);
             }
-            Instr::Add(r1, r2, dst) => {
-                let val1_i64 = self.get_i64(*r1);
-                let val2_i64 = self.get_i64(*r2);
-                let val1_f64 = self.get_f64(*r1);
-                let val2_f64 = self.get_f64(*r2);
 
-                // Use f64 arithmetic if either value looks like a valid f64
-                if (!val1_f64.is_nan() && val1_f64.fract() != 0.0)
-                    || (!val2_f64.is_nan() && val2_f64.fract() != 0.0)
-                {
-                    self.set_f64(*dst, val1_f64 + val2_f64);
-                } else {
-                    self.set_i64(*dst, val1_i64.wrapping_add(val2_i64));
-                }
+            // i64 arithmetic operations
+            Instr::AddI64(r1, r2, dst) => {
+                let val1 = self.get_i64(*r1);
+                let val2 = self.get_i64(*r2);
+                self.set_i64(*dst, val1.wrapping_add(val2));
             }
-            Instr::Sub(r1, r2, dst) => {
-                let val1_i64 = self.get_i64(*r1);
-                let val2_i64 = self.get_i64(*r2);
-                let val1_f64 = self.get_f64(*r1);
-                let val2_f64 = self.get_f64(*r2);
+            Instr::SubI64(r1, r2, dst) => {
+                let val1 = self.get_i64(*r1);
+                let val2 = self.get_i64(*r2);
+                self.set_i64(*dst, val1.wrapping_sub(val2));
+            }
+            Instr::MulI64(r1, r2, dst) => {
+                let val1 = self.get_i64(*r1);
+                let val2 = self.get_i64(*r2);
+                self.set_i64(*dst, val1.wrapping_mul(val2));
+            }
+            Instr::GtI64(r1, r2, dst) => {
+                let val1 = self.get_i64(*r1);
+                let val2 = self.get_i64(*r2);
+                self.set_i64(*dst, if val1 > val2 { 1 } else { 0 });
+            }
 
-                if (!val1_f64.is_nan() && val1_f64.fract() != 0.0)
-                    || (!val2_f64.is_nan() && val2_f64.fract() != 0.0)
-                {
-                    self.set_f64(*dst, val1_f64 - val2_f64);
-                } else {
-                    self.set_i64(*dst, val1_i64.wrapping_sub(val2_i64));
-                }
+            // f64 arithmetic operations
+            Instr::AddF64(r1, r2, dst) => {
+                let val1 = self.get_f64(*r1);
+                let val2 = self.get_f64(*r2);
+                self.set_f64(*dst, val1 + val2);
             }
-            Instr::Mul(r1, r2, dst) => {
-                let val1_i64 = self.get_i64(*r1);
-                let val2_i64 = self.get_i64(*r2);
-                let val1_f64 = self.get_f64(*r1);
-                let val2_f64 = self.get_f64(*r2);
+            Instr::SubF64(r1, r2, dst) => {
+                let val1 = self.get_f64(*r1);
+                let val2 = self.get_f64(*r2);
+                self.set_f64(*dst, val1 - val2);
+            }
+            Instr::MulF64(r1, r2, dst) => {
+                let val1 = self.get_f64(*r1);
+                let val2 = self.get_f64(*r2);
+                self.set_f64(*dst, val1 * val2);
+            }
+            Instr::GtF64(r1, r2, dst) => {
+                let val1 = self.get_f64(*r1);
+                let val2 = self.get_f64(*r2);
+                self.set_i64(*dst, if val1 > val2 { 1 } else { 0 });
+            }
 
-                if (!val1_f64.is_nan() && val1_f64.fract() != 0.0)
-                    || (!val2_f64.is_nan() && val2_f64.fract() != 0.0)
-                {
-                    self.set_f64(*dst, val1_f64 * val2_f64);
-                } else {
-                    self.set_i64(*dst, val1_i64.wrapping_mul(val2_i64));
-                }
-            }
-            Instr::Gt(r1, r2, dst) => {
-                let val1_i64 = self.get_i64(*r1);
-                let val2_i64 = self.get_i64(*r2);
-                let val1_f64 = self.get_f64(*r1);
-                let val2_f64 = self.get_f64(*r2);
-
-                let result = if (!val1_f64.is_nan() && val1_f64.fract() != 0.0)
-                    || (!val2_f64.is_nan() && val2_f64.fract() != 0.0)
-                {
-                    val1_f64 > val2_f64
-                } else {
-                    val1_i64 > val2_i64
-                };
-                self.set_i64(*dst, if result { 1 } else { 0 });
-            }
             Instr::JmpIfFalse(cond, target) => {
                 if self.registers[*cond as usize] == 0 {
                     *pc = *target;
@@ -157,7 +153,7 @@ impl VirtualMachine {
         while (pc as usize) < bytecode.len() {
             // Validate jump targets
             if let Instr::Jmp(target) | Instr::JmpIfFalse(_, target) = &bytecode[pc as usize] {
-                if *target != u64::MAX && (*target as usize) >= bytecode.len() {
+                if (*target as usize) > bytecode.len() {
                     return Err(VmError::InvalidJumpTarget(*target));
                 }
             }
@@ -188,15 +184,15 @@ impl VirtualMachine {
         self.set_i64(reg, value);
     }
 
-    // /// Set register value as f64
-    // pub fn set_register_f64(&mut self, reg: u64, value: f64) {
-    //     self.set_f64(reg, value);
-    // }
+    /// Set register value as f64
+    pub fn set_register_f64(&mut self, reg: u64, value: f64) {
+        self.set_f64(reg, value);
+    }
 
-    // /// Set raw register value
-    // pub fn set_register_raw(&mut self, reg: u64, value: u64) {
-    //     self.registers[reg as usize] = value;
-    // }
+    /// Set raw register value
+    pub fn set_register_raw(&mut self, reg: u64, value: u64) {
+        self.registers[reg as usize] = value;
+    }
 }
 
 impl Default for VirtualMachine {
@@ -215,7 +211,7 @@ mod tests {
         let program = vec![
             Instr::LoadI64(10, 1),
             Instr::LoadI64(5, 2),
-            Instr::Add(1, 2, 0),
+            Instr::AddI64(1, 2, 0),
         ];
 
         vm.eval_program(&program).unwrap();
@@ -228,7 +224,7 @@ mod tests {
         let program = vec![
             Instr::LoadF64(3.14, 1),
             Instr::LoadF64(2.0, 2),
-            Instr::Mul(1, 2, 0),
+            Instr::MulF64(1, 2, 0),
         ];
 
         vm.eval_program(&program).unwrap();
@@ -243,9 +239,9 @@ mod tests {
             Instr::LoadI64(42, 1),
             Instr::I64ToF64(1, 2), // r2 = 42.0
             Instr::LoadF64(3.14, 3),
-            Instr::F64ToI64(3, 4), // r4 = 3
-            Instr::Add(2, 3, 5),   // r5 = 42.0 + 3.14 = 45.14
-            Instr::F64ToI64(5, 0), // r0 = 45
+            Instr::F64ToI64(3, 4),  // r4 = 3
+            Instr::AddF64(2, 3, 5), // r5 = 42.0 + 3.14 = 45.14
+            Instr::F64ToI64(5, 0),  // r0 = 45
         ];
 
         vm.eval_program(&program).unwrap();
@@ -260,10 +256,10 @@ mod tests {
         let program = vec![
             Instr::LoadI64(10, 1),   // r1 = 10
             Instr::LoadI64(5, 2),    // r2 = 5
-            Instr::Gt(1, 2, 3),      // r3 = 1 (10 > 5)
+            Instr::GtI64(1, 2, 3),   // r3 = 1 (10 > 5)
             Instr::JmpIfFalse(3, 6), // Don't jump (r3 != 0)
             Instr::LoadI64(100, 0),  // r0 = 100
-            Instr::Jmp(u64::MAX),    // Jump to end
+            Instr::Jmp(7),           // Jump to end
             Instr::LoadI64(200, 0),  // r0 = 200 (skipped)
         ];
 
@@ -277,10 +273,10 @@ mod tests {
         let program = vec![
             Instr::LoadI64(5, 1),    // r1 = 5
             Instr::LoadI64(5, 2),    // r2 = 5
-            Instr::Gt(1, 2, 3),      // r3 = 0 (5 > 5 is false)
+            Instr::GtI64(1, 2, 3),   // r3 = 0 (5 > 5 is false)
             Instr::JmpIfFalse(3, 6), // Jump because r3 == 0
             Instr::LoadI64(100, 0),  // r0 = 100 (skipped)
-            Instr::Jmp(u64::MAX),    // (skipped)
+            Instr::Jmp(7),           // (skipped)
             Instr::LoadI64(200, 0),  // r0 = 200 (executed)
         ];
 
@@ -294,7 +290,7 @@ mod tests {
         let program = vec![
             Instr::LoadI64(-10, 1),
             Instr::LoadI64(5, 2),
-            Instr::Add(1, 2, 0), // -10 + 5 = -5
+            Instr::AddI64(1, 2, 0), // -10 + 5 = -5
         ];
 
         vm.eval_program(&program).unwrap();
@@ -325,12 +321,12 @@ mod tests {
             Instr::LoadI64(1, 2), // r2 = 1 (decrement)
             Instr::LoadI64(0, 3), // r3 = 0 (comparison)
             // Loop start (instruction 4)
-            Instr::Gt(1, 3, 4),       // r4 = (r1 > 0)
-            Instr::JmpIfFalse(4, 10), // if r1 <= 0, exit loop
-            Instr::Mul(0, 1, 0),      // r0 = r0 * r1
-            Instr::Sub(1, 2, 1),      // r1 = r1 - 1
-            Instr::Jmp(4),            // jump back to loop start
-                                      // Loop end
+            Instr::GtI64(1, 3, 4),   // r4 = (r1 > 0)
+            Instr::JmpIfFalse(4, 9), // if r1 <= 0, exit loop
+            Instr::MulI64(0, 1, 0),  // r0 = r0 * r1
+            Instr::SubI64(1, 2, 1),  // r1 = r1 - 1
+            Instr::Jmp(4),           // jump back to loop start
+                                     // Loop end
         ];
 
         vm.eval_program(&program).unwrap();
@@ -344,7 +340,7 @@ mod tests {
             Instr::LoadI64(10, 1),  // r1 = 10
             Instr::I64ToF64(1, 2),  // r2 = 10.0
             Instr::LoadF64(2.5, 3), // r3 = 2.5
-            Instr::Mul(2, 3, 0),    // r0 = 10.0 * 2.5 = 25.0
+            Instr::MulF64(2, 3, 0), // r0 = 10.0 * 2.5 = 25.0
         ];
 
         vm.eval_program(&program).unwrap();
@@ -358,7 +354,7 @@ mod tests {
         let program = vec![
             Instr::LoadI64(5, 1),
             Instr::LoadI64(10, 2),
-            Instr::Sub(1, 2, 0), // 5 - 10 = -5
+            Instr::SubI64(1, 2, 0), // 5 - 10 = -5
         ];
 
         vm.eval_program(&program).unwrap();
@@ -375,5 +371,35 @@ mod tests {
 
         vm.eval_program(&program).unwrap();
         assert_eq!(vm.get_register_i64(0), 3);
+    }
+
+    #[test]
+    fn test_f64_comparison() {
+        let mut vm = VirtualMachine::new();
+        let program = vec![
+            Instr::LoadF64(3.14, 1),
+            Instr::LoadF64(2.71, 2),
+            Instr::GtF64(1, 2, 0), // 3.14 > 2.71 = true (1)
+        ];
+
+        vm.eval_program(&program).unwrap();
+        assert_eq!(vm.get_register_i64(0), 1);
+    }
+
+    #[test]
+    fn test_mixed_type_operations() {
+        let mut vm = VirtualMachine::new();
+        let program = vec![
+            Instr::LoadI64(100, 1), // r1 = 100
+            Instr::LoadI64(50, 2),  // r2 = 50
+            Instr::SubI64(1, 2, 3), // r3 = 50 (i64)
+            Instr::I64ToF64(3, 4),  // r4 = 50.0 (f64)
+            Instr::LoadF64(1.5, 5), // r5 = 1.5
+            Instr::MulF64(4, 5, 0), // r0 = 50.0 * 1.5 = 75.0
+        ];
+
+        vm.eval_program(&program).unwrap();
+        let result = vm.get_register_f64(0);
+        assert!((result - 75.0).abs() < f64::EPSILON);
     }
 }
