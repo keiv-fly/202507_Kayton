@@ -415,4 +415,27 @@ mod tests {
         let result = vm.get_register_f64(0);
         assert!((result - 7.3).abs() < f64::EPSILON);
     }
+    #[test]
+    fn test_invalid_jump_target() {
+        let mut vm = VirtualMachine::new();
+        let program = vec![
+            Instr::LoadI64(1, 0),
+            Instr::Jmp(10), // Invalid target - beyond program length
+        ];
+
+        let result = vm.eval_program(&program);
+        assert!(matches!(result, Err(VmError::InvalidJumpTarget(10))));
+    }
+
+    #[test]
+    fn test_invalid_conditional_jump_target() {
+        let mut vm = VirtualMachine::new();
+        let program = vec![
+            Instr::LoadI64(0, 1),
+            Instr::JmpIfFalse(1, 5), // Invalid target - beyond program length
+        ];
+
+        let result = vm.eval_program(&program);
+        assert!(matches!(result, Err(VmError::InvalidJumpTarget(5))));
+    }
 }
