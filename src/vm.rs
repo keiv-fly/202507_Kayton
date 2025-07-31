@@ -402,4 +402,17 @@ mod tests {
         let result = vm.get_register_f64(0);
         assert!((result - 75.0).abs() < f64::EPSILON);
     }
+    #[test]
+    fn test_f64_subtraction() {
+        let mut vm = VirtualMachine::new();
+        let program = vec![
+            Instr::LoadF64(10.5, 1),
+            Instr::LoadF64(3.2, 2),
+            Instr::SubF64(1, 2, 0), // 10.5 - 3.2 = 7.3
+        ];
+
+        vm.eval_program(&program).unwrap();
+        let result = vm.get_register_f64(0);
+        assert!((result - 7.3).abs() < f64::EPSILON);
+    }
 }
