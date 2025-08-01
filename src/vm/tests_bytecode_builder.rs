@@ -96,6 +96,25 @@ fn test_factorial_loop_with_labels() {
 }
 
 #[test]
+fn test_builder_comparison_ops() {
+    let mut vm = VirtualMachine::new();
+    let mut builder = BytecodeBuilder::new();
+
+    builder.load_i64(4, 1);
+    builder.load_i64(5, 2);
+    builder.lt_i64(1, 2, 0);
+    builder.gte_i64(1, 2, 3);
+    builder.lte_i64(1, 2, 4);
+
+    let bytecode = builder.build();
+
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1))).unwrap();
+    assert_eq!(vm.get_register_i64(0), 1);
+    assert_eq!(vm.get_register_i64(3), 0);
+    assert_eq!(vm.get_register_i64(4), 1);
+}
+
+#[test]
 fn test_jump_forward_if_true_with_labels() {
     let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
@@ -297,7 +316,7 @@ fn test_fibonacci_with_labels() {
 
     builder.place_label(loop_start);
     // Check if counter >= n
-    builder.gt_i64(4, 1, 6); // r6 = (counter > n)
+    builder.gte_i64(4, 1, 6); // r6 = (counter >= n)
     builder.jump_if_true_to_label(6, loop_end);
 
     // temp = a + b

@@ -92,6 +92,42 @@ fn test_format_gt_i64() {
 }
 
 #[test]
+fn test_format_gte_i64() {
+    let mut builder = BytecodeBuilder::new();
+    builder.gte_i64(1, 2, 3);
+    let bytecode = builder.build();
+
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
+    let lines: Vec<&str> = formatted.lines().collect();
+
+    assert_eq!(lines[0], "0 GTE_I64 r1, r2, r3");
+}
+
+#[test]
+fn test_format_lt_i64() {
+    let mut builder = BytecodeBuilder::new();
+    builder.lt_i64(4, 5, 6);
+    let bytecode = builder.build();
+
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
+    let lines: Vec<&str> = formatted.lines().collect();
+
+    assert_eq!(lines[0], "0 LT_I64 r4, r5, r6");
+}
+
+#[test]
+fn test_format_lte_i64() {
+    let mut builder = BytecodeBuilder::new();
+    builder.lte_i64(7, 8, 9);
+    let bytecode = builder.build();
+
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
+    let lines: Vec<&str> = formatted.lines().collect();
+
+    assert_eq!(lines[0], "0 LTE_I64 r7, r8, r9");
+}
+
+#[test]
 fn test_format_add_f64() {
     let mut builder = BytecodeBuilder::new();
     builder.add_f64(1, 2, 3);
@@ -137,6 +173,42 @@ fn test_format_gt_f64() {
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 GT_F64 r15, r16, r17");
+}
+
+#[test]
+fn test_format_gte_f64() {
+    let mut builder = BytecodeBuilder::new();
+    builder.gte_f64(1, 2, 3);
+    let bytecode = builder.build();
+
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
+    let lines: Vec<&str> = formatted.lines().collect();
+
+    assert_eq!(lines[0], "0 GTE_F64 r1, r2, r3");
+}
+
+#[test]
+fn test_format_lt_f64() {
+    let mut builder = BytecodeBuilder::new();
+    builder.lt_f64(4, 5, 6);
+    let bytecode = builder.build();
+
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
+    let lines: Vec<&str> = formatted.lines().collect();
+
+    assert_eq!(lines[0], "0 LT_F64 r4, r5, r6");
+}
+
+#[test]
+fn test_format_lte_f64() {
+    let mut builder = BytecodeBuilder::new();
+    builder.lte_f64(7, 8, 9);
+    let bytecode = builder.build();
+
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
+    let lines: Vec<&str> = formatted.lines().collect();
+
+    assert_eq!(lines[0], "0 LTE_F64 r7, r8, r9");
 }
 
 #[test]
@@ -547,6 +619,9 @@ fn test_format_incomplete_all_f64_arithmetic() {
         (SUB_F64, "SUB_F64"),
         (MUL_F64, "MUL_F64"),
         (GT_F64, "GT_F64"),
+        (GTE_F64, "GTE_F64"),
+        (LT_F64, "LT_F64"),
+        (LTE_F64, "LTE_F64"),
     ];
 
     for (opcode, name) in instructions {
@@ -561,7 +636,13 @@ fn test_format_incomplete_all_f64_arithmetic() {
 
 #[test]
 fn test_format_incomplete_all_i64_arithmetic() {
-    let instructions = vec![(MUL_I64, "MUL_I64"), (GT_I64, "GT_I64")];
+    let instructions = vec![
+        (MUL_I64, "MUL_I64"),
+        (GT_I64, "GT_I64"),
+        (GTE_I64, "GTE_I64"),
+        (LT_I64, "LT_I64"),
+        (LTE_I64, "LTE_I64"),
+    ];
 
     for (opcode, name) in instructions {
         let bytecode = vec![opcode]; // Missing all register operands

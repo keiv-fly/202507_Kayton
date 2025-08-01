@@ -93,6 +93,27 @@ impl BytecodeBuilder {
         self.bytecode.push(dst);
     }
 
+    pub fn gte_i64(&mut self, r1: u8, r2: u8, dst: u8) {
+        self.bytecode.push(GTE_I64);
+        self.bytecode.push(r1);
+        self.bytecode.push(r2);
+        self.bytecode.push(dst);
+    }
+
+    pub fn lt_i64(&mut self, r1: u8, r2: u8, dst: u8) {
+        self.bytecode.push(LT_I64);
+        self.bytecode.push(r1);
+        self.bytecode.push(r2);
+        self.bytecode.push(dst);
+    }
+
+    pub fn lte_i64(&mut self, r1: u8, r2: u8, dst: u8) {
+        self.bytecode.push(LTE_I64);
+        self.bytecode.push(r1);
+        self.bytecode.push(r2);
+        self.bytecode.push(dst);
+    }
+
     pub fn add_f64(&mut self, r1: u8, r2: u8, dst: u8) {
         self.bytecode.push(ADD_F64);
         self.bytecode.push(r1);
@@ -116,6 +137,27 @@ impl BytecodeBuilder {
 
     pub fn gt_f64(&mut self, r1: u8, r2: u8, dst: u8) {
         self.bytecode.push(GT_F64);
+        self.bytecode.push(r1);
+        self.bytecode.push(r2);
+        self.bytecode.push(dst);
+    }
+
+    pub fn gte_f64(&mut self, r1: u8, r2: u8, dst: u8) {
+        self.bytecode.push(GTE_F64);
+        self.bytecode.push(r1);
+        self.bytecode.push(r2);
+        self.bytecode.push(dst);
+    }
+
+    pub fn lt_f64(&mut self, r1: u8, r2: u8, dst: u8) {
+        self.bytecode.push(LT_F64);
+        self.bytecode.push(r1);
+        self.bytecode.push(r2);
+        self.bytecode.push(dst);
+    }
+
+    pub fn lte_f64(&mut self, r1: u8, r2: u8, dst: u8) {
+        self.bytecode.push(LTE_F64);
         self.bytecode.push(r1);
         self.bytecode.push(r2);
         self.bytecode.push(dst);
