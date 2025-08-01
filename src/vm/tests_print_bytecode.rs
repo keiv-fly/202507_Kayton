@@ -7,7 +7,7 @@ fn test_format_load_i64() {
     builder.load_i64(42, 1);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 LOAD_I64 r1, 42");
@@ -21,7 +21,7 @@ fn test_format_load_f64() {
     builder.load_f64(3.14159, 2);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 LOAD_F64 r2, 3.14159");
@@ -35,7 +35,7 @@ fn test_format_negative_i64() {
     builder.load_i64(-100, 0);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 LOAD_I64 r0, -100");
@@ -47,7 +47,7 @@ fn test_format_add_i64() {
     builder.add_i64(1, 2, 3);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 ADD_I64 r1, r2, r3");
@@ -61,7 +61,7 @@ fn test_format_sub_i64() {
     builder.sub_i64(5, 6, 7);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 SUB_I64 r5, r6, r7");
@@ -73,7 +73,7 @@ fn test_format_mul_i64() {
     builder.mul_i64(10, 11, 12);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 MUL_I64 r10, r11, r12");
@@ -85,7 +85,7 @@ fn test_format_gt_i64() {
     builder.gt_i64(20, 21, 22);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 GT_I64 r20, r21, r22");
@@ -97,7 +97,7 @@ fn test_format_add_f64() {
     builder.add_f64(1, 2, 3);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 ADD_F64 r1, r2, r3");
@@ -109,7 +109,7 @@ fn test_format_sub_f64() {
     builder.sub_f64(4, 5, 6);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 SUB_F64 r4, r5, r6");
@@ -121,7 +121,7 @@ fn test_format_mul_f64() {
     builder.mul_f64(7, 8, 9);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 MUL_F64 r7, r8, r9");
@@ -133,7 +133,7 @@ fn test_format_gt_f64() {
     builder.gt_f64(15, 16, 17);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 GT_F64 r15, r16, r17");
@@ -146,7 +146,7 @@ fn test_format_type_conversions() {
     builder.f64_to_i64(3, 4);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 I64_TO_F64 r1, r2");
@@ -165,7 +165,7 @@ fn test_format_jump_forward_if_false() {
     builder.patch_target(target_pos, end_pos - target_pos);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 LOAD_I64 r1, 1");
@@ -184,7 +184,7 @@ fn test_format_jump_forward_if_true() {
     builder.patch_target(target_pos, end_pos - target_pos);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 LOAD_I64 r1, 1");
@@ -199,7 +199,7 @@ fn test_format_jump_backward_if_false() {
     builder.jump_backward_if_false(1, 10);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 LOAD_I64 r1, 1");
@@ -214,7 +214,7 @@ fn test_format_jump_backward_if_true() {
     builder.jump_backward_if_true(1, 5);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 LOAD_I64 r1, 1");
@@ -228,7 +228,7 @@ fn test_format_jmp() {
     builder.jmp_to(42);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 JMP 42");
@@ -240,12 +240,13 @@ fn test_format_jmp() {
 fn test_format_unknown_opcode() {
     let bytecode = vec![0xFF, 0x00, 0x01]; // Unknown opcode followed by some bytes
 
-    let formatted = format_bytecode(&bytecode);
-    let lines: Vec<&str> = formatted.lines().collect();
+    let result = format_bytecode(&bytecode);
+    assert!(result.is_err());
+    let error = result.unwrap_err();
+    let lines: Vec<&str> = error.lines().collect();
 
     assert_eq!(lines[0], "0 UNKNOWN_OPCODE 0xFF");
-    assert_eq!(lines[1], "1 UNKNOWN_OPCODE 0x00");
-    assert_eq!(lines[2], "2 UNKNOWN_OPCODE 0x01");
+    assert_eq!(lines.len(), 1);
 }
 
 #[test]
@@ -259,7 +260,7 @@ fn test_format_complex_program() {
     builder.mul_f64(4, 5, 6);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 LOAD_I64 r1, 10");
@@ -274,7 +275,7 @@ fn test_format_complex_program() {
 fn test_format_empty_bytecode() {
     let bytecode = vec![];
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "pc=0");
@@ -282,17 +283,30 @@ fn test_format_empty_bytecode() {
     assert_eq!(lines.len(), 2);
 }
 
+// Updated tests for incomplete instructions - now expecting errors
+
 #[test]
 fn test_format_incomplete_load_i64() {
     // LOAD_I64 opcode with register but missing value
     let bytecode = vec![LOAD_I64, 1, 0x42]; // Missing 7 more bytes for i64
 
-    let formatted = format_bytecode(&bytecode);
-    let lines: Vec<&str> = formatted.lines().collect();
+    let result = format_bytecode(&bytecode);
+    assert!(result.is_err());
+    let error = result.unwrap_err();
+    assert!(error.contains("Incomplete LOAD_I64 instruction"));
+    assert!(error.contains("missing value bytes"));
+}
 
-    // Should terminate early due to incomplete instruction
-    assert_eq!(lines[0], "pc=3");
-    assert_eq!(lines[1], "bytecode.len()=3");
+#[test]
+fn test_format_incomplete_load_i64_missing_register() {
+    // LOAD_I64 opcode with no register
+    let bytecode = vec![LOAD_I64]; // Missing register and value
+
+    let result = format_bytecode(&bytecode);
+    assert!(result.is_err());
+    let error = result.unwrap_err();
+    assert!(error.contains("Incomplete LOAD_I64 instruction"));
+    assert!(error.contains("missing register"));
 }
 
 #[test]
@@ -300,12 +314,23 @@ fn test_format_incomplete_load_f64() {
     // LOAD_F64 opcode with register but missing value
     let bytecode = vec![LOAD_F64, 2]; // Missing 8 bytes for f64
 
-    let formatted = format_bytecode(&bytecode);
-    let lines: Vec<&str> = formatted.lines().collect();
+    let result = format_bytecode(&bytecode);
+    assert!(result.is_err());
+    let error = result.unwrap_err();
+    assert!(error.contains("Incomplete LOAD_F64 instruction"));
+    assert!(error.contains("missing value bytes"));
+}
 
-    // Should terminate early due to incomplete instruction
-    assert_eq!(lines[0], "pc=2");
-    assert_eq!(lines[1], "bytecode.len()=2");
+#[test]
+fn test_format_incomplete_load_f64_missing_register() {
+    // LOAD_F64 opcode with no register
+    let bytecode = vec![LOAD_F64]; // Missing register and value
+
+    let result = format_bytecode(&bytecode);
+    assert!(result.is_err());
+    let error = result.unwrap_err();
+    assert!(error.contains("Incomplete LOAD_F64 instruction"));
+    assert!(error.contains("missing register"));
 }
 
 #[test]
@@ -313,12 +338,23 @@ fn test_format_incomplete_arithmetic() {
     // ADD_I64 opcode with only one register
     let bytecode = vec![ADD_I64, 1]; // Missing 2 more register bytes
 
-    let formatted = format_bytecode(&bytecode);
-    let lines: Vec<&str> = formatted.lines().collect();
+    let result = format_bytecode(&bytecode);
+    assert!(result.is_err());
+    let error = result.unwrap_err();
+    assert!(error.contains("Incomplete ADD_I64 instruction"));
+    assert!(error.contains("missing register operands"));
+}
 
-    // Should terminate early due to incomplete instruction
-    assert_eq!(lines[0], "pc=2");
-    assert_eq!(lines[1], "bytecode.len()=2");
+#[test]
+fn test_format_incomplete_sub_i64() {
+    // SUB_I64 opcode with missing registers
+    let bytecode = vec![SUB_I64]; // Missing all register bytes
+
+    let result = format_bytecode(&bytecode);
+    assert!(result.is_err());
+    let error = result.unwrap_err();
+    assert!(error.contains("Incomplete SUB_I64 instruction"));
+    assert!(error.contains("missing register operands"));
 }
 
 #[test]
@@ -326,12 +362,47 @@ fn test_format_incomplete_jump() {
     // JUMP_FORWARD_IF_FALSE with condition register but missing offset
     let bytecode = vec![JUMP_FORWARD_IF_FALSE, 1]; // Missing 2 bytes for offset
 
-    let formatted = format_bytecode(&bytecode);
-    let lines: Vec<&str> = formatted.lines().collect();
+    let result = format_bytecode(&bytecode);
+    assert!(result.is_err());
+    let error = result.unwrap_err();
+    assert!(error.contains("Incomplete JUMP_FORWARD_IF_FALSE instruction"));
+    assert!(error.contains("missing condition register or offset"));
+}
 
-    // Should terminate early due to incomplete instruction
-    assert_eq!(lines[0], "pc=2");
-    assert_eq!(lines[1], "bytecode.len()=2");
+#[test]
+fn test_format_incomplete_jump_missing_register() {
+    // JUMP_FORWARD_IF_FALSE with no condition register
+    let bytecode = vec![JUMP_FORWARD_IF_FALSE]; // Missing register and offset
+
+    let result = format_bytecode(&bytecode);
+    assert!(result.is_err());
+    let error = result.unwrap_err();
+    assert!(error.contains("Incomplete JUMP_FORWARD_IF_FALSE instruction"));
+    assert!(error.contains("missing condition register or offset"));
+}
+
+#[test]
+fn test_format_incomplete_jmp() {
+    // JMP with missing target
+    let bytecode = vec![JMP]; // Missing 2 bytes for target
+
+    let result = format_bytecode(&bytecode);
+    assert!(result.is_err());
+    let error = result.unwrap_err();
+    assert!(error.contains("Incomplete JMP instruction"));
+    assert!(error.contains("missing target address"));
+}
+
+#[test]
+fn test_format_incomplete_type_conversion() {
+    // I64_TO_F64 with missing destination register
+    let bytecode = vec![I64_TO_F64, 1]; // Missing destination register
+
+    let result = format_bytecode(&bytecode);
+    assert!(result.is_err());
+    let error = result.unwrap_err();
+    assert!(error.contains("Incomplete I64_TO_F64 instruction"));
+    assert!(error.contains("missing register operands"));
 }
 
 #[test]
@@ -342,7 +413,7 @@ fn test_format_various_register_numbers() {
     builder.load_i64(3, 255); // Register 255 (max)
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 LOAD_I64 r0, 1");
@@ -359,7 +430,7 @@ fn test_format_extreme_values() {
     builder.load_f64(f64::MIN, 4);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], format!("0 LOAD_I64 r1, {}", i64::MAX));
@@ -378,7 +449,7 @@ fn test_format_special_f64_values() {
     builder.load_f64(-0.0, 5);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
     assert_eq!(lines[0], "0 LOAD_F64 r1, inf");
@@ -407,7 +478,7 @@ fn test_format_with_labels_simulation() {
     builder.place_label(loop_end); // Loop end
 
     let bytecode = builder.build();
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
 
     // Just verify it doesn't crash and produces reasonable output
     assert!(!formatted.is_empty());
@@ -425,7 +496,7 @@ fn test_format_output_ends_with_newline() {
     builder.load_i64(42, 1);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
 
     // Should end with a newline
     assert!(formatted.ends_with('\n'));
@@ -439,7 +510,7 @@ fn test_format_consistent_with_print_bytecode() {
     builder.add_i64(1, 1, 2);
     let bytecode = builder.build();
 
-    let formatted = format_bytecode(&bytecode);
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
 
     // Capture what print_bytecode would output
     use std::io::{self, Write};
@@ -465,4 +536,70 @@ fn test_format_consistent_with_print_bytecode() {
     assert!(formatted.contains("ADD_I64 r1, r1, r2"));
     assert!(formatted.contains("pc="));
     assert!(formatted.contains("bytecode.len()="));
+}
+
+// Additional tests for error conditions on all instruction types
+
+#[test]
+fn test_format_incomplete_all_f64_arithmetic() {
+    let instructions = vec![
+        (ADD_F64, "ADD_F64"),
+        (SUB_F64, "SUB_F64"),
+        (MUL_F64, "MUL_F64"),
+        (GT_F64, "GT_F64"),
+    ];
+
+    for (opcode, name) in instructions {
+        let bytecode = vec![opcode, 1]; // Missing 2 register operands
+        let result = format_bytecode(&bytecode);
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        assert!(error.contains(&format!("Incomplete {} instruction", name)));
+        assert!(error.contains("missing register operands"));
+    }
+}
+
+#[test]
+fn test_format_incomplete_all_i64_arithmetic() {
+    let instructions = vec![(MUL_I64, "MUL_I64"), (GT_I64, "GT_I64")];
+
+    for (opcode, name) in instructions {
+        let bytecode = vec![opcode]; // Missing all register operands
+        let result = format_bytecode(&bytecode);
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        assert!(error.contains(&format!("Incomplete {} instruction", name)));
+        assert!(error.contains("missing register operands"));
+    }
+}
+
+#[test]
+fn test_format_incomplete_all_jump_instructions() {
+    let instructions = vec![
+        (JUMP_BACKWARD_IF_FALSE, "JUMP_BACKWARD_IF_FALSE"),
+        (JUMP_BACKWARD_IF_TRUE, "JUMP_BACKWARD_IF_TRUE"),
+    ];
+
+    for (opcode, name) in instructions {
+        let bytecode = vec![opcode]; // Missing condition register and offset
+        let result = format_bytecode(&bytecode);
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        assert!(error.contains(&format!("Incomplete {} instruction", name)));
+        assert!(error.contains("missing condition register or offset"));
+    }
+}
+
+#[test]
+fn test_format_incomplete_conversion_instructions() {
+    let instructions = vec![(F64_TO_I64, "F64_TO_I64")];
+
+    for (opcode, name) in instructions {
+        let bytecode = vec![opcode, 1]; // Missing destination register
+        let result = format_bytecode(&bytecode);
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        assert!(error.contains(&format!("Incomplete {} instruction", name)));
+        assert!(error.contains("missing register operands"));
+    }
 }

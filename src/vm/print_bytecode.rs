@@ -1,7 +1,7 @@
 use super::*;
 
 /// Format bytecode as a human-readable string
-pub fn format_bytecode(bytecode: &[u8]) -> String {
+pub fn format_bytecode(bytecode: &[u8]) -> Result<String, String> {
     let mut output = String::new();
     let mut pc = 0;
 
@@ -13,12 +13,18 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
         match opcode {
             LOAD_I64 => {
                 if pc >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete LOAD_I64 instruction at pc {}: missing register",
+                        start_pc
+                    ));
                 }
                 let reg = bytecode[pc];
                 pc += 1;
                 if pc + 7 >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete LOAD_I64 instruction at pc {}: missing value bytes",
+                        start_pc
+                    ));
                 }
                 let value = i64::from_le_bytes([
                     bytecode[pc],
@@ -35,12 +41,18 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
             }
             LOAD_F64 => {
                 if pc >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete LOAD_F64 instruction at pc {}: missing register",
+                        start_pc
+                    ));
                 }
                 let reg = bytecode[pc];
                 pc += 1;
                 if pc + 7 >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete LOAD_F64 instruction at pc {}: missing value bytes",
+                        start_pc
+                    ));
                 }
                 let value = f64::from_le_bytes([
                     bytecode[pc],
@@ -57,7 +69,10 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
             }
             ADD_I64 => {
                 if pc + 2 >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete ADD_I64 instruction at pc {}: missing register operands",
+                        start_pc
+                    ));
                 }
                 let r1 = bytecode[pc];
                 let r2 = bytecode[pc + 1];
@@ -70,7 +85,10 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
             }
             SUB_I64 => {
                 if pc + 2 >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete SUB_I64 instruction at pc {}: missing register operands",
+                        start_pc
+                    ));
                 }
                 let r1 = bytecode[pc];
                 let r2 = bytecode[pc + 1];
@@ -83,7 +101,10 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
             }
             MUL_I64 => {
                 if pc + 2 >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete MUL_I64 instruction at pc {}: missing register operands",
+                        start_pc
+                    ));
                 }
                 let r1 = bytecode[pc];
                 let r2 = bytecode[pc + 1];
@@ -96,7 +117,10 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
             }
             GT_I64 => {
                 if pc + 2 >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete GT_I64 instruction at pc {}: missing register operands",
+                        start_pc
+                    ));
                 }
                 let r1 = bytecode[pc];
                 let r2 = bytecode[pc + 1];
@@ -106,7 +130,10 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
             }
             ADD_F64 => {
                 if pc + 2 >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete ADD_F64 instruction at pc {}: missing register operands",
+                        start_pc
+                    ));
                 }
                 let r1 = bytecode[pc];
                 let r2 = bytecode[pc + 1];
@@ -119,7 +146,10 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
             }
             SUB_F64 => {
                 if pc + 2 >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete SUB_F64 instruction at pc {}: missing register operands",
+                        start_pc
+                    ));
                 }
                 let r1 = bytecode[pc];
                 let r2 = bytecode[pc + 1];
@@ -132,7 +162,10 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
             }
             MUL_F64 => {
                 if pc + 2 >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete MUL_F64 instruction at pc {}: missing register operands",
+                        start_pc
+                    ));
                 }
                 let r1 = bytecode[pc];
                 let r2 = bytecode[pc + 1];
@@ -145,7 +178,10 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
             }
             GT_F64 => {
                 if pc + 2 >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete GT_F64 instruction at pc {}: missing register operands",
+                        start_pc
+                    ));
                 }
                 let r1 = bytecode[pc];
                 let r2 = bytecode[pc + 1];
@@ -155,7 +191,10 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
             }
             JUMP_FORWARD_IF_FALSE => {
                 if pc + 2 >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete JUMP_FORWARD_IF_FALSE instruction at pc {}: missing condition register or offset",
+                        start_pc
+                    ));
                 }
                 let cond_reg = bytecode[pc];
                 pc += 1;
@@ -169,7 +208,10 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
             }
             JUMP_FORWARD_IF_TRUE => {
                 if pc + 2 >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete JUMP_FORWARD_IF_TRUE instruction at pc {}: missing condition register or offset",
+                        start_pc
+                    ));
                 }
                 let cond_reg = bytecode[pc];
                 pc += 1;
@@ -183,7 +225,10 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
             }
             JUMP_BACKWARD_IF_FALSE => {
                 if pc + 2 >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete JUMP_BACKWARD_IF_FALSE instruction at pc {}: missing condition register or offset",
+                        start_pc
+                    ));
                 }
                 let cond_reg = bytecode[pc];
                 pc += 1;
@@ -197,7 +242,10 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
             }
             JUMP_BACKWARD_IF_TRUE => {
                 if pc + 2 >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete JUMP_BACKWARD_IF_TRUE instruction at pc {}: missing condition register or offset",
+                        start_pc
+                    ));
                 }
                 let cond_reg = bytecode[pc];
                 pc += 1;
@@ -211,7 +259,10 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
             }
             JMP => {
                 if pc + 1 >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete JMP instruction at pc {}: missing target address",
+                        start_pc
+                    ));
                 }
                 let target = u16::from_le_bytes([bytecode[pc], bytecode[pc + 1]]);
                 pc += 2;
@@ -219,7 +270,10 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
             }
             I64_TO_F64 => {
                 if pc + 1 >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete I64_TO_F64 instruction at pc {}: missing register operands",
+                        start_pc
+                    ));
                 }
                 let src = bytecode[pc];
                 let dst = bytecode[pc + 1];
@@ -228,7 +282,10 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
             }
             F64_TO_I64 => {
                 if pc + 1 >= bytecode.len() {
-                    break;
+                    return Err(format!(
+                        "Incomplete F64_TO_I64 instruction at pc {}: missing register operands",
+                        start_pc
+                    ));
                 }
                 let src = bytecode[pc];
                 let dst = bytecode[pc + 1];
@@ -236,8 +293,7 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
                 output.push_str(&format!("{} F64_TO_I64 r{}, r{}\n", start_pc, src, dst));
             }
             _ => {
-                output.push_str(&format!("{} UNKNOWN_OPCODE 0x{:02X}\n", start_pc, opcode));
-                pc += 1;
+                return Err(format!("{} UNKNOWN_OPCODE 0x{:02X}\n", start_pc, opcode));
             }
         }
     }
@@ -245,10 +301,13 @@ pub fn format_bytecode(bytecode: &[u8]) -> String {
     output.push_str(&format!("pc={}\n", pc));
     output.push_str(&format!("bytecode.len()={}\n", bytecode.len()));
 
-    output
+    Ok(output)
 }
 
 /// Disassemble bytecode and print in human-readable format
 pub fn print_bytecode(bytecode: &[u8]) {
-    print!("{}", format_bytecode(bytecode));
+    match format_bytecode(bytecode) {
+        Ok(formatted) => print!("{}", formatted),
+        Err(error) => eprintln!("Error formatting bytecode: {}", error),
+    }
 }
