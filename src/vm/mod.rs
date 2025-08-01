@@ -1,6 +1,7 @@
 mod tests;
 
 use std::fmt;
+use std::time::{Duration, Instant};
 
 // Instruction opcodes
 pub const LOAD_I64: u8 = 0x01;
@@ -26,6 +27,7 @@ pub enum VmError {
     InvalidOpcode(u8),
     InvalidJumpTarget(u16),
     UnexpectedEndOfProgram,
+    Timeout(Duration),
     // InvalidRegister(u8),
 }
 
@@ -35,6 +37,7 @@ impl fmt::Display for VmError {
             VmError::InvalidOpcode(opcode) => write!(f, "Invalid opcode: 0x{:02X}", opcode),
             VmError::InvalidJumpTarget(target) => write!(f, "Invalid jump target: {}", target),
             VmError::UnexpectedEndOfProgram => write!(f, "Unexpected end of program"),
+            VmError::Timeout(duration) => write!(f, "Execution timeout after {:?}", duration),
             // VmError::InvalidRegister(reg) => write!(f, "Invalid register: {}", reg),
         }
     }
@@ -369,12 +372,38 @@ impl VirtualMachine {
         Ok(())
     }
 
-    /// Execute a program from bytecode
+    /// Execute a program from bytecode without timeout
     pub fn eval_program(&mut self, bytecode: &[u8]) -> Result<(), VmError> {
+        self.eval_program_with_timeout(bytecode, None)
+    }
+
+    /// Execute a program from bytecode with optional timeout
+    pub fn eval_program_with_timeout(
+        &mut self,
+        bytecode: &[u8],
+        timeout: Option<Duration>,
+    ) -> Result<(), VmError> {
         let mut pc = 0usize;
+        let start_time = Instant::now();
+        let mut instruction_count = 0u64;
+
+        // Check timeout every N instructions to balance performance and responsiveness
+        const TIMEOUT_CHECK_INTERVAL: u64 = 1000;
 
         while pc < bytecode.len() {
             self.execute_instruction(bytecode, &mut pc)?;
+
+            instruction_count += 1;
+
+            // Periodically check for timeout to avoid overhead on every instruction
+            if let Some(timeout_duration) = timeout {
+                if instruction_count % TIMEOUT_CHECK_INTERVAL == 0 {
+                    let elapsed = start_time.elapsed();
+                    if elapsed > timeout_duration {
+                        return Err(VmError::Timeout(elapsed));
+                    }
+                }
+            }
         }
 
         Ok(())

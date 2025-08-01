@@ -1,4 +1,5 @@
 use super::*;
+use std::time::Duration;
 
 #[test]
 fn test_basic_i64_arithmetic() {
@@ -225,6 +226,7 @@ fn test_invalid_jump_target() {
     let result = vm.eval_program(&bytecode);
     assert!(matches!(result, Err(VmError::InvalidJumpTarget(1000))));
 }
+
 #[test]
 fn test_register_raw_operations() {
     let mut vm = VirtualMachine::new();
@@ -498,4 +500,141 @@ fn test_backward_jump_bounds_check() {
 
     let result = vm.eval_program(&bytecode);
     assert!(matches!(result, Err(VmError::InvalidJumpTarget(_))));
+}
+
+// NEW TIMEOUT TESTS
+
+#[test]
+fn test_execution_with_timeout_no_timeout() {
+    let mut vm = VirtualMachine::new();
+    let mut builder = BytecodeBuilder::new();
+
+    // Simple program that should complete quickly
+    builder.load_i64(10, 1);
+    builder.load_i64(5, 2);
+    builder.add_i64(1, 2, 0);
+    let bytecode = builder.build();
+
+    println!("=== test_execution_with_timeout_no_timeout bytecode ===");
+    print_bytecode(&bytecode);
+    println!();
+
+    // Run with a generous timeout - should not timeout
+    let result = vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)));
+    assert!(result.is_ok());
+    assert_eq!(vm.get_register_i64(0), 15);
+}
+
+#[test]
+fn test_execution_with_short_timeout() {
+    let mut vm = VirtualMachine::new();
+    let mut builder = BytecodeBuilder::new();
+
+    // Create a long-running program with a tight loop
+    builder.load_i64(100000, 1); // r1 = 100000 (large counter)
+    builder.load_i64(0, 0); // r0 = 0 (accumulator)
+    builder.load_i64(1, 2); // r2 = 1 (decrement)
+    builder.load_i64(0, 3); // r3 = 0 (comparison)
+
+    // Loop start - this will run many iterations
+    let loop_start = builder.current_pos();
+    builder.gt_i64(1, 3, 4); // r4 = (r1 > 0)
+    let target_pos = builder.jump_forward_if_false(4); // if r1 <= 0, exit loop
+    builder.add_i64(0, 2, 0); // r0 = r0 + 1
+    builder.sub_i64(1, 2, 1); // r1 = r1 - 1
+    builder.jmp(loop_start); // jump back to loop start
+
+    let loop_end = builder.current_pos();
+    builder.patch_target(target_pos, loop_end - target_pos);
+
+    let bytecode = builder.build();
+
+    println!("=== test_execution_with_short_timeout bytecode ===");
+    print_bytecode(&bytecode);
+    println!();
+
+    // Run with a very short timeout - should timeout
+    let result = vm.eval_program_with_timeout(&bytecode, Some(Duration::from_millis(1)));
+
+    match result {
+        Err(VmError::Timeout(elapsed)) => {
+            println!("Program timed out after {:?}", elapsed);
+            assert!(elapsed > Duration::from_millis(1));
+        }
+        _ => panic!("Expected timeout error, got {:?}", result),
+    }
+}
+
+#[test]
+fn test_execution_with_no_timeout_specified() {
+    let mut vm = VirtualMachine::new();
+    let mut builder = BytecodeBuilder::new();
+
+    builder.load_i64(42, 1);
+    builder.load_i64(8, 2);
+    builder.mul_i64(1, 2, 0);
+    let bytecode = builder.build();
+
+    println!("=== test_execution_with_no_timeout_specified bytecode ===");
+    print_bytecode(&bytecode);
+    println!();
+
+    // Run with no timeout (None) - should work normally
+    let result = vm.eval_program_with_timeout(&bytecode, None);
+    assert!(result.is_ok());
+    assert_eq!(vm.get_register_i64(0), 336);
+}
+
+#[test]
+fn test_timeout_check_interval() {
+    let mut vm = VirtualMachine::new();
+    let mut builder = BytecodeBuilder::new();
+
+    // Create a program with exactly 999 instructions (less than TIMEOUT_CHECK_INTERVAL)
+    // This tests that short programs complete without timeout checks
+    for i in 0..333 {
+        builder.load_i64(i, 1);
+        builder.load_i64(1, 2);
+        builder.add_i64(1, 2, 0); // 3 instructions per iteration = 999 total
+    }
+
+    let bytecode = builder.build();
+
+    println!("=== test_timeout_check_interval bytecode ===");
+    println!("Bytecode length: {} bytes", bytecode.len());
+    println!();
+
+    // Even with a very short timeout, this should complete because
+    // it has fewer than TIMEOUT_CHECK_INTERVAL instructions
+    let result = vm.eval_program_with_timeout(&bytecode, Some(Duration::from_nanos(1)));
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_backward_compatibility() {
+    let mut vm = VirtualMachine::new();
+    let mut builder = BytecodeBuilder::new();
+
+    builder.load_i64(100, 1);
+    builder.load_i64(50, 2);
+    builder.sub_i64(1, 2, 0);
+    let bytecode = builder.build();
+
+    println!("=== test_backward_compatibility bytecode ===");
+    print_bytecode(&bytecode);
+    println!();
+
+    // Test that the original eval_program method still works
+    let result = vm.eval_program(&bytecode);
+    assert!(result.is_ok());
+    assert_eq!(vm.get_register_i64(0), 50);
+}
+
+#[test]
+fn test_timeout_error_display() {
+    let timeout_error = VmError::Timeout(Duration::from_millis(500));
+    let error_string = format!("{}", timeout_error);
+    assert!(error_string.contains("Execution timeout"));
+    assert!(error_string.contains("500ms"));
+    println!("Timeout error display: {}", error_string);
 }
