@@ -21,7 +21,7 @@ pub enum VmError {
     InvalidOpcode(u8),
     InvalidJumpTarget(u16),
     UnexpectedEndOfProgram,
-    InvalidRegister(u8),
+    // InvalidRegister(u8),
 }
 
 impl fmt::Display for VmError {
@@ -30,7 +30,7 @@ impl fmt::Display for VmError {
             VmError::InvalidOpcode(opcode) => write!(f, "Invalid opcode: 0x{:02X}", opcode),
             VmError::InvalidJumpTarget(target) => write!(f, "Invalid jump target: {}", target),
             VmError::UnexpectedEndOfProgram => write!(f, "Unexpected end of program"),
-            VmError::InvalidRegister(reg) => write!(f, "Invalid register: {}", reg),
+            // VmError::InvalidRegister(reg) => write!(f, "Invalid register: {}", reg),
         }
     }
 }
@@ -258,7 +258,7 @@ impl VirtualMachine {
                 let target = *pc + self.read_u16(bytecode, *pc)? as usize;
                 *pc += 2;
 
-                if target >= bytecode.len() {
+                if target > bytecode.len() {
                     return Err(VmError::InvalidJumpTarget(target as u16));
                 }
 
@@ -274,7 +274,7 @@ impl VirtualMachine {
                 let target = self.read_u16(bytecode, *pc)? as usize;
                 *pc += 2;
 
-                if target >= bytecode.len() {
+                if target > bytecode.len() {
                     return Err(VmError::InvalidJumpTarget(target as u16));
                 }
 
@@ -438,18 +438,19 @@ impl BytecodeBuilder {
         self.bytecode.push(dst);
     }
 
-    pub fn jump_forward_if_false(&mut self, cond_reg: u8) -> (u16, u16) {
-        let jump_command_pos = self.bytecode.len() as u16;
+    pub fn jump_forward_if_false(&mut self, cond_reg: u8) -> u16 {
         self.bytecode.push(JUMP_FORWARD_IF_FALSE);
         self.bytecode.push(cond_reg);
         let target_bytes_pos = self.bytecode.len() as u16;
         self.bytecode.extend_from_slice(&0u16.to_le_bytes()); // Put zeros for target
-        (jump_command_pos, target_bytes_pos)
+        target_bytes_pos
     }
 
-    pub fn jmp(&mut self, target: u16) {
+    pub fn jmp(&mut self, target: u16) -> u16 {
         self.bytecode.push(JMP);
+        let target_bytes_pos = self.bytecode.len() as u16;
         self.bytecode.extend_from_slice(&target.to_le_bytes());
+        target_bytes_pos
     }
 
     pub fn i64_to_f64(&mut self, src: u8, dst: u8) {
@@ -490,7 +491,6 @@ impl Default for BytecodeBuilder {
 /// Disassemble bytecode and print in human-readable format
 pub fn print_bytecode(bytecode: &[u8]) {
     let mut pc = 0;
-    let mut line_no = 0;
 
     while pc < bytecode.len() {
         let opcode = bytecode[pc];
@@ -518,7 +518,7 @@ pub fn print_bytecode(bytecode: &[u8]) {
                     bytecode[pc + 7],
                 ]);
                 pc += 8;
-                println!("{} LOAD_I64 r{}, {}", line_no, reg, value);
+                println!("{} LOAD_I64 r{}, {}", start_pc, reg, value);
             }
             LOAD_F64 => {
                 if pc >= bytecode.len() {
@@ -540,7 +540,7 @@ pub fn print_bytecode(bytecode: &[u8]) {
                     bytecode[pc + 7],
                 ]);
                 pc += 8;
-                println!("{} LOAD_F64 r{}, {}", line_no, reg, value);
+                println!("{} LOAD_F64 r{}, {}", start_pc, reg, value);
             }
             ADD_I64 => {
                 if pc + 2 >= bytecode.len() {
@@ -550,7 +550,7 @@ pub fn print_bytecode(bytecode: &[u8]) {
                 let r2 = bytecode[pc + 1];
                 let dst = bytecode[pc + 2];
                 pc += 3;
-                println!("{} ADD_I64 r{}, r{}, r{}", line_no, r1, r2, dst);
+                println!("{} ADD_I64 r{}, r{}, r{}", start_pc, r1, r2, dst);
             }
             SUB_I64 => {
                 if pc + 2 >= bytecode.len() {
@@ -560,7 +560,7 @@ pub fn print_bytecode(bytecode: &[u8]) {
                 let r2 = bytecode[pc + 1];
                 let dst = bytecode[pc + 2];
                 pc += 3;
-                println!("{} SUB_I64 r{}, r{}, r{}", line_no, r1, r2, dst);
+                println!("{} SUB_I64 r{}, r{}, r{}", start_pc, r1, r2, dst);
             }
             MUL_I64 => {
                 if pc + 2 >= bytecode.len() {
@@ -570,7 +570,7 @@ pub fn print_bytecode(bytecode: &[u8]) {
                 let r2 = bytecode[pc + 1];
                 let dst = bytecode[pc + 2];
                 pc += 3;
-                println!("{} MUL_I64 r{}, r{}, r{}", line_no, r1, r2, dst);
+                println!("{} MUL_I64 r{}, r{}, r{}", start_pc, r1, r2, dst);
             }
             GT_I64 => {
                 if pc + 2 >= bytecode.len() {
@@ -580,7 +580,7 @@ pub fn print_bytecode(bytecode: &[u8]) {
                 let r2 = bytecode[pc + 1];
                 let dst = bytecode[pc + 2];
                 pc += 3;
-                println!("{} GT_I64 r{}, r{}, r{}", line_no, r1, r2, dst);
+                println!("{} GT_I64 r{}, r{}, r{}", start_pc, r1, r2, dst);
             }
             ADD_F64 => {
                 if pc + 2 >= bytecode.len() {
@@ -590,7 +590,7 @@ pub fn print_bytecode(bytecode: &[u8]) {
                 let r2 = bytecode[pc + 1];
                 let dst = bytecode[pc + 2];
                 pc += 3;
-                println!("{} ADD_F64 r{}, r{}, r{}", line_no, r1, r2, dst);
+                println!("{} ADD_F64 r{}, r{}, r{}", start_pc, r1, r2, dst);
             }
             SUB_F64 => {
                 if pc + 2 >= bytecode.len() {
@@ -600,7 +600,7 @@ pub fn print_bytecode(bytecode: &[u8]) {
                 let r2 = bytecode[pc + 1];
                 let dst = bytecode[pc + 2];
                 pc += 3;
-                println!("{} SUB_F64 r{}, r{}, r{}", line_no, r1, r2, dst);
+                println!("{} SUB_F64 r{}, r{}, r{}", start_pc, r1, r2, dst);
             }
             MUL_F64 => {
                 if pc + 2 >= bytecode.len() {
@@ -610,7 +610,7 @@ pub fn print_bytecode(bytecode: &[u8]) {
                 let r2 = bytecode[pc + 1];
                 let dst = bytecode[pc + 2];
                 pc += 3;
-                println!("{} MUL_F64 r{}, r{}, r{}", line_no, r1, r2, dst);
+                println!("{} MUL_F64 r{}, r{}, r{}", start_pc, r1, r2, dst);
             }
             GT_F64 => {
                 if pc + 2 >= bytecode.len() {
@@ -620,7 +620,7 @@ pub fn print_bytecode(bytecode: &[u8]) {
                 let r2 = bytecode[pc + 1];
                 let dst = bytecode[pc + 2];
                 pc += 3;
-                println!("{} GT_F64 r{}, r{}, r{}", line_no, r1, r2, dst);
+                println!("{} GT_F64 r{}, r{}, r{}", start_pc, r1, r2, dst);
             }
             JUMP_FORWARD_IF_FALSE => {
                 if pc + 2 >= bytecode.len() {
@@ -629,11 +629,11 @@ pub fn print_bytecode(bytecode: &[u8]) {
                 let cond_reg = bytecode[pc];
                 pc += 1;
                 let offset = u16::from_le_bytes([bytecode[pc], bytecode[pc + 1]]);
-                let target = pc + 2 + offset as usize;
+                let target = pc + offset as usize;
                 pc += 2;
                 println!(
                     "{} JUMP_FORWARD_IF_FALSE r{}, {}",
-                    line_no, cond_reg, target
+                    start_pc, cond_reg, target
                 );
             }
             JMP => {
@@ -642,7 +642,7 @@ pub fn print_bytecode(bytecode: &[u8]) {
                 }
                 let target = u16::from_le_bytes([bytecode[pc], bytecode[pc + 1]]);
                 pc += 2;
-                println!("{} JMP {}", line_no, target);
+                println!("{} JMP {}", start_pc, target);
             }
             I64_TO_F64 => {
                 if pc + 1 >= bytecode.len() {
@@ -651,7 +651,7 @@ pub fn print_bytecode(bytecode: &[u8]) {
                 let src = bytecode[pc];
                 let dst = bytecode[pc + 1];
                 pc += 2;
-                println!("{} I64_TO_F64 r{}, r{}", line_no, src, dst);
+                println!("{} I64_TO_F64 r{}, r{}", start_pc, src, dst);
             }
             F64_TO_I64 => {
                 if pc + 1 >= bytecode.len() {
@@ -660,15 +660,16 @@ pub fn print_bytecode(bytecode: &[u8]) {
                 let src = bytecode[pc];
                 let dst = bytecode[pc + 1];
                 pc += 2;
-                println!("{} F64_TO_I64 r{}, r{}", line_no, src, dst);
+                println!("{} F64_TO_I64 r{}, r{}", start_pc, src, dst);
             }
             _ => {
-                println!("{} UNKNOWN_OPCODE 0x{:02X}", line_no, opcode);
+                println!("{} UNKNOWN_OPCODE 0x{:02X}", start_pc, opcode);
                 pc += 1;
             }
         }
-        line_no += 1;
     }
+    println!("pc={}", pc);
+    println!("bytecode.len()={}", bytecode.len());
 }
 
 #[cfg(test)]
@@ -741,15 +742,16 @@ mod tests {
         builder.load_i64(5, 2); // r2 = 5
         builder.gt_i64(1, 2, 3); // r3 = 1 (10 > 5)
 
-        let (jump_cmd_pos, target_pos) = builder.jump_forward_if_false(3); // Don't jump (r3 != 0)
+        let target_pos = builder.jump_forward_if_false(3); // Don't jump (r3 != 0)
         builder.load_i64(100, 0); // r0 = 100
-        let end_pos = builder.current_pos() + 3; // After the jmp instruction
-        builder.jmp(end_pos); // Jump to end
+        let jmp_target_pos = builder.jmp(0); // Jump to end
         let skip_pos = builder.current_pos();
         builder.load_i64(200, 0); // r0 = 200 (should be skipped)
 
         // Patch the conditional jump to point to the skipped instruction
-        builder.patch_target(target_pos, skip_pos);
+        builder.patch_target(target_pos, skip_pos - target_pos);
+        let end_pos = builder.current_pos() as u16;
+        builder.patch_target(jmp_target_pos, end_pos);
 
         let bytecode = builder.build();
 
@@ -770,7 +772,7 @@ mod tests {
         builder.load_i64(5, 2); // r2 = 5
         builder.gt_i64(1, 2, 3); // r3 = 0 (5 > 5 is false)
 
-        let (jump_cmd_pos, target_pos) = builder.jump_forward_if_false(3); // Jump because r3 == 0
+        let target_pos = builder.jump_forward_if_false(3); // Jump because r3 == 0
         builder.load_i64(100, 0); // r0 = 100 (should be skipped)
         let end_pos = builder.current_pos() + 3; // After the jmp instruction
         builder.jmp(end_pos); // (should be skipped)
@@ -820,7 +822,7 @@ mod tests {
         // Loop start
         let loop_start = builder.current_pos();
         builder.gt_i64(1, 3, 4); // r4 = (r1 > 0)
-        let (jump_cmd_pos, target_pos) = builder.jump_forward_if_false(4); // if r1 <= 0, exit loop
+        let target_pos = builder.jump_forward_if_false(4); // if r1 <= 0, exit loop
         builder.mul_i64(0, 1, 0); // r0 = r0 * r1
         builder.sub_i64(1, 2, 1); // r1 = r1 - 1
         builder.jmp(loop_start); // jump back to loop start
