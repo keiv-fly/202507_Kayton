@@ -321,7 +321,9 @@ impl VirtualMachine {
                 *pc += 2;
 
                 if offset > *pc {
-                    return Err(VmError::InvalidJumpTarget((*pc - offset) as u16));
+                    return Err(VmError::InvalidJumpTarget(
+                        (*pc as i64 - offset as i64) as u16,
+                    ));
                 }
 
                 if self.registers[cond_reg as usize] != 0 {
@@ -632,7 +634,7 @@ impl BytecodeBuilder {
         if target <= current_pos {
             panic!("Forward jump target must be after current position");
         }
-        let offset = target - current_pos - 3; // -3 for instruction size
+        let offset = target - current_pos - 4; // -4 for instruction size
         self.bytecode.push(JUMP_FORWARD_IF_FALSE);
         self.bytecode.push(cond_reg);
         self.bytecode.extend_from_slice(&offset.to_le_bytes());
@@ -644,7 +646,7 @@ impl BytecodeBuilder {
         if target <= current_pos {
             panic!("Forward jump target must be after current position");
         }
-        let offset = target - current_pos - 3; // -3 for instruction size
+        let offset = target - current_pos - 4; // -4 for instruction size
         self.bytecode.push(JUMP_FORWARD_IF_TRUE);
         self.bytecode.push(cond_reg);
         self.bytecode.extend_from_slice(&offset.to_le_bytes());
@@ -656,7 +658,7 @@ impl BytecodeBuilder {
         if target >= current_pos {
             panic!("Backward jump target must be before current position");
         }
-        let offset = current_pos - target + 3; // +3 for instruction size
+        let offset = current_pos - target + 4; // +4 for instruction size
         self.jump_backward_if_false(cond_reg, offset);
     }
 
@@ -666,7 +668,7 @@ impl BytecodeBuilder {
         if target >= current_pos {
             panic!("Backward jump target must be before current position");
         }
-        let offset = current_pos - target + 3; // +3 for instruction size
+        let offset = current_pos - target + 4; // +4 for instruction size
         self.jump_backward_if_true(cond_reg, offset);
     }
 
