@@ -28,6 +28,12 @@ pub const F64_TO_I64: u8 = 0x0E;
 pub const JUMP_BACKWARD_IF_FALSE: u8 = 0x0F;
 pub const JUMP_BACKWARD_IF_TRUE: u8 = 0x10;
 pub const JUMP_FORWARD_IF_TRUE: u8 = 0x11;
+pub const GTE_I64: u8 = 0x12;
+pub const LT_I64: u8 = 0x13;
+pub const LTE_I64: u8 = 0x14;
+pub const GTE_F64: u8 = 0x15;
+pub const LT_F64: u8 = 0x16;
+pub const LTE_F64: u8 = 0x17;
 
 #[derive(Debug)]
 pub enum VmError {
@@ -211,6 +217,42 @@ impl VirtualMachine {
                 let val2 = self.get_i64(r2);
                 self.set_i64(dst, if val1 > val2 { 1 } else { 0 });
             }
+            GTE_I64 => {
+                if *pc + 2 >= bytecode.len() {
+                    return Err(VmError::UnexpectedEndOfProgram);
+                }
+                let r1 = bytecode[*pc];
+                let r2 = bytecode[*pc + 1];
+                let dst = bytecode[*pc + 2];
+                *pc += 3;
+                let val1 = self.get_i64(r1);
+                let val2 = self.get_i64(r2);
+                self.set_i64(dst, if val1 >= val2 { 1 } else { 0 });
+            }
+            LT_I64 => {
+                if *pc + 2 >= bytecode.len() {
+                    return Err(VmError::UnexpectedEndOfProgram);
+                }
+                let r1 = bytecode[*pc];
+                let r2 = bytecode[*pc + 1];
+                let dst = bytecode[*pc + 2];
+                *pc += 3;
+                let val1 = self.get_i64(r1);
+                let val2 = self.get_i64(r2);
+                self.set_i64(dst, if val1 < val2 { 1 } else { 0 });
+            }
+            LTE_I64 => {
+                if *pc + 2 >= bytecode.len() {
+                    return Err(VmError::UnexpectedEndOfProgram);
+                }
+                let r1 = bytecode[*pc];
+                let r2 = bytecode[*pc + 1];
+                let dst = bytecode[*pc + 2];
+                *pc += 3;
+                let val1 = self.get_i64(r1);
+                let val2 = self.get_i64(r2);
+                self.set_i64(dst, if val1 <= val2 { 1 } else { 0 });
+            }
             ADD_F64 => {
                 // Format: [opcode, r1, r2, dst]
                 if *pc + 2 >= bytecode.len() {
@@ -262,6 +304,42 @@ impl VirtualMachine {
                 let val1 = self.get_f64(r1);
                 let val2 = self.get_f64(r2);
                 self.set_i64(dst, if val1 > val2 { 1 } else { 0 });
+            }
+            GTE_F64 => {
+                if *pc + 2 >= bytecode.len() {
+                    return Err(VmError::UnexpectedEndOfProgram);
+                }
+                let r1 = bytecode[*pc];
+                let r2 = bytecode[*pc + 1];
+                let dst = bytecode[*pc + 2];
+                *pc += 3;
+                let val1 = self.get_f64(r1);
+                let val2 = self.get_f64(r2);
+                self.set_i64(dst, if val1 >= val2 { 1 } else { 0 });
+            }
+            LT_F64 => {
+                if *pc + 2 >= bytecode.len() {
+                    return Err(VmError::UnexpectedEndOfProgram);
+                }
+                let r1 = bytecode[*pc];
+                let r2 = bytecode[*pc + 1];
+                let dst = bytecode[*pc + 2];
+                *pc += 3;
+                let val1 = self.get_f64(r1);
+                let val2 = self.get_f64(r2);
+                self.set_i64(dst, if val1 < val2 { 1 } else { 0 });
+            }
+            LTE_F64 => {
+                if *pc + 2 >= bytecode.len() {
+                    return Err(VmError::UnexpectedEndOfProgram);
+                }
+                let r1 = bytecode[*pc];
+                let r2 = bytecode[*pc + 1];
+                let dst = bytecode[*pc + 2];
+                *pc += 3;
+                let val1 = self.get_f64(r1);
+                let val2 = self.get_f64(r2);
+                self.set_i64(dst, if val1 <= val2 { 1 } else { 0 });
             }
             JUMP_FORWARD_IF_FALSE => {
                 // Format: [opcode, cond_reg, target[2]]

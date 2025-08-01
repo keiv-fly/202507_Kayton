@@ -184,6 +184,44 @@ fn test_f64_subtraction() {
 }
 
 #[test]
+fn test_i64_comparison_ops() {
+    let mut vm = VirtualMachine::new();
+    let mut builder = BytecodeBuilder::new();
+
+    builder.load_i64(5, 1);
+    builder.load_i64(5, 2);
+    builder.gte_i64(1, 2, 0); // r0 = 1
+    builder.lt_i64(1, 2, 3); // r3 = 0
+    builder.lte_i64(1, 2, 4); // r4 = 1
+
+    let bytecode = builder.build();
+
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1))).unwrap();
+    assert_eq!(vm.get_register_i64(0), 1);
+    assert_eq!(vm.get_register_i64(3), 0);
+    assert_eq!(vm.get_register_i64(4), 1);
+}
+
+#[test]
+fn test_f64_comparison_ops() {
+    let mut vm = VirtualMachine::new();
+    let mut builder = BytecodeBuilder::new();
+
+    builder.load_f64(2.5, 1);
+    builder.load_f64(3.0, 2);
+    builder.gte_f64(1, 2, 0); // r0 = 0
+    builder.lt_f64(1, 2, 3); // r3 = 1
+    builder.lte_f64(1, 2, 4); // r4 = 1
+
+    let bytecode = builder.build();
+
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1))).unwrap();
+    assert_eq!(vm.get_register_i64(0), 0);
+    assert_eq!(vm.get_register_i64(3), 1);
+    assert_eq!(vm.get_register_i64(4), 1);
+}
+
+#[test]
 fn test_f64_comparison() {
     let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();

@@ -128,6 +128,45 @@ pub fn format_bytecode(bytecode: &[u8]) -> Result<String, String> {
                 pc += 3;
                 output.push_str(&format!("{} GT_I64 r{}, r{}, r{}\n", start_pc, r1, r2, dst));
             }
+            GTE_I64 => {
+                if pc + 2 >= bytecode.len() {
+                    return Err(format!(
+                        "Incomplete GTE_I64 instruction at pc {}: missing register operands",
+                        start_pc
+                    ));
+                }
+                let r1 = bytecode[pc];
+                let r2 = bytecode[pc + 1];
+                let dst = bytecode[pc + 2];
+                pc += 3;
+                output.push_str(&format!("{} GTE_I64 r{}, r{}, r{}\n", start_pc, r1, r2, dst));
+            }
+            LT_I64 => {
+                if pc + 2 >= bytecode.len() {
+                    return Err(format!(
+                        "Incomplete LT_I64 instruction at pc {}: missing register operands",
+                        start_pc
+                    ));
+                }
+                let r1 = bytecode[pc];
+                let r2 = bytecode[pc + 1];
+                let dst = bytecode[pc + 2];
+                pc += 3;
+                output.push_str(&format!("{} LT_I64 r{}, r{}, r{}\n", start_pc, r1, r2, dst));
+            }
+            LTE_I64 => {
+                if pc + 2 >= bytecode.len() {
+                    return Err(format!(
+                        "Incomplete LTE_I64 instruction at pc {}: missing register operands",
+                        start_pc
+                    ));
+                }
+                let r1 = bytecode[pc];
+                let r2 = bytecode[pc + 1];
+                let dst = bytecode[pc + 2];
+                pc += 3;
+                output.push_str(&format!("{} LTE_I64 r{}, r{}, r{}\n", start_pc, r1, r2, dst));
+            }
             ADD_F64 => {
                 if pc + 2 >= bytecode.len() {
                     return Err(format!(
@@ -188,6 +227,45 @@ pub fn format_bytecode(bytecode: &[u8]) -> Result<String, String> {
                 let dst = bytecode[pc + 2];
                 pc += 3;
                 output.push_str(&format!("{} GT_F64 r{}, r{}, r{}\n", start_pc, r1, r2, dst));
+            }
+            GTE_F64 => {
+                if pc + 2 >= bytecode.len() {
+                    return Err(format!(
+                        "Incomplete GTE_F64 instruction at pc {}: missing register operands",
+                        start_pc
+                    ));
+                }
+                let r1 = bytecode[pc];
+                let r2 = bytecode[pc + 1];
+                let dst = bytecode[pc + 2];
+                pc += 3;
+                output.push_str(&format!("{} GTE_F64 r{}, r{}, r{}\n", start_pc, r1, r2, dst));
+            }
+            LT_F64 => {
+                if pc + 2 >= bytecode.len() {
+                    return Err(format!(
+                        "Incomplete LT_F64 instruction at pc {}: missing register operands",
+                        start_pc
+                    ));
+                }
+                let r1 = bytecode[pc];
+                let r2 = bytecode[pc + 1];
+                let dst = bytecode[pc + 2];
+                pc += 3;
+                output.push_str(&format!("{} LT_F64 r{}, r{}, r{}\n", start_pc, r1, r2, dst));
+            }
+            LTE_F64 => {
+                if pc + 2 >= bytecode.len() {
+                    return Err(format!(
+                        "Incomplete LTE_F64 instruction at pc {}: missing register operands",
+                        start_pc
+                    ));
+                }
+                let r1 = bytecode[pc];
+                let r2 = bytecode[pc + 1];
+                let dst = bytecode[pc + 2];
+                pc += 3;
+                output.push_str(&format!("{} LTE_F64 r{}, r{}, r{}\n", start_pc, r1, r2, dst));
             }
             JUMP_FORWARD_IF_FALSE => {
                 if pc + 2 >= bytecode.len() {
