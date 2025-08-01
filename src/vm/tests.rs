@@ -541,7 +541,7 @@ fn test_backward_jump_bounds_check() {
 
     builder.load_i64(1, 1); // r1 = 1
     // Try to jump backward too far (offset larger than current position)
-    builder.jump_backward_if_true(1, 13); // This should cause an error when executed
+    builder.jump_backward_if_true(1, 15); // This should cause an error when executed
 
     let bytecode = builder.build();
 

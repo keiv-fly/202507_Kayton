@@ -933,8 +933,8 @@ pub fn print_bytecode(bytecode: &[u8]) {
                 let cond_reg = bytecode[pc];
                 pc += 1;
                 let offset = u16::from_le_bytes([bytecode[pc], bytecode[pc + 1]]);
-                let target = pc.saturating_sub(offset as usize);
                 pc += 2;
+                let target = pc as i64 - offset as i64;
                 println!(
                     "{} JUMP_BACKWARD_IF_FALSE r{}, {} (offset: {})",
                     start_pc, cond_reg, target, offset
@@ -947,8 +947,8 @@ pub fn print_bytecode(bytecode: &[u8]) {
                 let cond_reg = bytecode[pc];
                 pc += 1;
                 let offset = u16::from_le_bytes([bytecode[pc], bytecode[pc + 1]]);
-                let target = pc as i64 - offset as i64;
                 pc += 2;
+                let target = pc as i64 - offset as i64;
                 println!(
                     "{} JUMP_BACKWARD_IF_TRUE r{}, {} (offset: {})",
                     start_pc, cond_reg, target, offset
