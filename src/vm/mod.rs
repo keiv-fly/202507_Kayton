@@ -2,6 +2,7 @@ mod bytecode_builder;
 mod print_bytecode;
 mod tests;
 mod tests_bytecode_builder;
+mod tests_print_bytecode;
 
 pub use bytecode_builder::BytecodeBuilder;
 pub use print_bytecode::print_bytecode;
