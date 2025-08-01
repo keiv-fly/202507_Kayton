@@ -779,7 +779,7 @@ pub fn print_bytecode(bytecode: &[u8]) {
                 let cond_reg = bytecode[pc];
                 pc += 1;
                 let offset = u16::from_le_bytes([bytecode[pc], bytecode[pc + 1]]);
-                let target = pc.saturating_sub(offset as usize);
+                let target = pc as i64 - offset as i64;
                 pc += 2;
                 println!(
                     "{} JUMP_BACKWARD_IF_TRUE r{}, {} (offset: {})",

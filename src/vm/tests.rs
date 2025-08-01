@@ -14,7 +14,8 @@ fn test_basic_i64_arithmetic() {
     print_bytecode(&bytecode);
     println!();
 
-    vm.eval_program(&bytecode).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     assert_eq!(vm.get_register_i64(0), 15);
 }
 
@@ -31,7 +32,8 @@ fn test_basic_f64_arithmetic() {
     print_bytecode(&bytecode);
     println!();
 
-    vm.eval_program(&bytecode).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     let result = vm.get_register_f64(0);
     assert!((result - 6.28).abs() < 0.001);
 }
@@ -52,7 +54,8 @@ fn test_type_conversions() {
     print_bytecode(&bytecode);
     println!();
 
-    vm.eval_program(&bytecode).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     assert_eq!(vm.get_register_i64(0), 45);
     assert_eq!(vm.get_register_i64(4), 3);
     assert!((vm.get_register_f64(2) - 42.0).abs() < f64::EPSILON);
@@ -84,7 +87,8 @@ fn test_comparison_and_jumps() {
     print_bytecode(&bytecode);
     println!();
 
-    vm.eval_program(&bytecode).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     assert_eq!(vm.get_register_i64(0), 100);
 }
 
@@ -113,7 +117,8 @@ fn test_conditional_jump_with_zero() {
     print_bytecode(&bytecode);
     println!();
 
-    vm.eval_program(&bytecode).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     assert_eq!(vm.get_register_i64(0), 200);
 }
 
@@ -130,7 +135,8 @@ fn test_negative_numbers() {
     print_bytecode(&bytecode);
     println!();
 
-    vm.eval_program(&bytecode).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     assert_eq!(vm.get_register_i64(0), -5);
 }
 
@@ -162,7 +168,8 @@ fn test_factorial_loop() {
     print_bytecode(&bytecode);
     println!();
 
-    vm.eval_program(&bytecode).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     assert_eq!(vm.get_register_i64(0), 120);
 }
 
@@ -180,7 +187,8 @@ fn test_mixed_arithmetic() {
     print_bytecode(&bytecode);
     println!();
 
-    vm.eval_program(&bytecode).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     let result = vm.get_register_f64(0);
     assert!((result - 25.0).abs() < f64::EPSILON);
 }
@@ -194,7 +202,7 @@ fn test_invalid_opcode() {
     print_bytecode(&bytecode);
     println!();
 
-    let result = vm.eval_program(&bytecode);
+    let result = vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)));
     assert!(matches!(result, Err(VmError::InvalidOpcode(0xFF))));
 }
 
@@ -207,7 +215,7 @@ fn test_unexpected_end_of_program() {
     print_bytecode(&bytecode);
     println!();
 
-    let result = vm.eval_program(&bytecode);
+    let result = vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)));
     assert!(matches!(result, Err(VmError::UnexpectedEndOfProgram)));
 }
 
@@ -223,7 +231,7 @@ fn test_invalid_jump_target() {
     print_bytecode(&bytecode);
     println!();
 
-    let result = vm.eval_program(&bytecode);
+    let result = vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)));
     assert!(matches!(result, Err(VmError::InvalidJumpTarget(1000))));
 }
 
@@ -263,7 +271,8 @@ fn test_f64_subtraction() {
     print_bytecode(&bytecode);
     println!();
 
-    vm.eval_program(&bytecode).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     let result = vm.get_register_f64(0);
     assert!((result - 7.3).abs() < 0.001);
 }
@@ -289,7 +298,8 @@ fn test_f64_comparison() {
     print_bytecode(&bytecode);
     println!();
 
-    vm.eval_program(&bytecode).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     assert_eq!(vm.get_register_i64(0), 1); // 5.5 > 3.2 is true
     assert_eq!(vm.get_register_i64(5), 0); // 2.1 > 2.1 is false
 }
@@ -310,7 +320,8 @@ fn test_f64_comparison_with_negatives() {
     print_bytecode(&bytecode);
     println!();
 
-    vm.eval_program(&bytecode).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     assert_eq!(vm.get_register_i64(0), 1); // -1.5 > -2.7 is true
 }
 
@@ -332,7 +343,8 @@ fn test_complex_f64_operations() {
     print_bytecode(&bytecode);
     println!();
 
-    vm.eval_program(&bytecode).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     assert_eq!(vm.get_register_i64(0), 1); // 7.0 > 5.0 is true
     assert!((vm.get_register_f64(3) - 7.0).abs() < f64::EPSILON);
 }
@@ -359,7 +371,8 @@ fn test_jump_forward_if_true() {
     print_bytecode(&bytecode);
     println!();
 
-    vm.eval_program(&bytecode).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     assert_eq!(vm.get_register_i64(0), 200); // Should have jumped to the second load
 }
 
@@ -385,7 +398,8 @@ fn test_jump_forward_if_true_false_condition() {
     print_bytecode(&bytecode);
     println!();
 
-    vm.eval_program(&bytecode).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     assert_eq!(vm.get_register_i64(0), 200); // Should execute both loads, ending with 200
 }
 
@@ -410,7 +424,8 @@ fn test_jump_backward_if_true_loop() {
     print_bytecode(&bytecode);
     println!();
 
-    vm.eval_program(&bytecode).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     assert_eq!(vm.get_register_i64(0), 6); // 3 + 2 + 1 = 6
     assert_eq!(vm.get_register_i64(1), 0); // Counter should be 0
 }
@@ -439,7 +454,8 @@ fn test_jump_backward_if_false_exit_loop() {
     print_bytecode(&bytecode);
     println!();
 
-    vm.eval_program(&bytecode).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     assert_eq!(vm.get_register_i64(0), 6); // Should increment 6 times
     assert_eq!(vm.get_register_i64(1), 6); // Counter should be 6
 }
@@ -479,7 +495,8 @@ fn test_nested_conditional_jumps() {
     print_bytecode(&bytecode);
     println!();
 
-    vm.eval_program(&bytecode).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     assert_eq!(vm.get_register_i64(0), 200);
 }
 
@@ -498,11 +515,11 @@ fn test_backward_jump_bounds_check() {
     print_bytecode(&bytecode);
     println!();
 
-    let result = vm.eval_program(&bytecode);
+    let result = vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)));
     assert!(matches!(result, Err(VmError::InvalidJumpTarget(_))));
 }
 
-// NEW TIMEOUT TESTS
+// TIMEOUT TESTS
 
 #[test]
 fn test_execution_with_timeout_no_timeout() {
