@@ -550,6 +550,7 @@ fn test_backward_jump_bounds_check() {
     println!();
 
     let result = vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)));
+    println!("result={:?}", result);
     assert!(matches!(result, Err(VmError::InvalidJumpTarget(_))));
 }
 
