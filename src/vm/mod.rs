@@ -17,6 +17,9 @@ pub const JUMP_FORWARD_IF_FALSE: u8 = 0x0B;
 pub const JMP: u8 = 0x0C;
 pub const I64_TO_F64: u8 = 0x0D;
 pub const F64_TO_I64: u8 = 0x0E;
+pub const JUMP_BACKWARD_IF_FALSE: u8 = 0x0F;
+pub const JUMP_BACKWARD_IF_TRUE: u8 = 0x10;
+pub const JUMP_FORWARD_IF_TRUE: u8 = 0x11;
 
 #[derive(Debug)]
 pub enum VmError {
@@ -268,6 +271,60 @@ impl VirtualMachine {
                     *pc = target;
                 }
             }
+            JUMP_FORWARD_IF_TRUE => {
+                // Format: [opcode, cond_reg, offset[2]]
+                if *pc + 2 >= bytecode.len() {
+                    return Err(VmError::UnexpectedEndOfProgram);
+                }
+                let cond_reg = bytecode[*pc];
+                *pc += 1;
+                let target = *pc + self.read_u16(bytecode, *pc)? as usize;
+                *pc += 2;
+
+                if target > bytecode.len() {
+                    return Err(VmError::InvalidJumpTarget(target as u16));
+                }
+
+                if self.registers[cond_reg as usize] != 0 {
+                    *pc = target;
+                }
+            }
+            JUMP_BACKWARD_IF_FALSE => {
+                // Format: [opcode, cond_reg, offset[2]]
+                if *pc + 2 >= bytecode.len() {
+                    return Err(VmError::UnexpectedEndOfProgram);
+                }
+                let cond_reg = bytecode[*pc];
+                *pc += 1;
+                let offset = self.read_u16(bytecode, *pc)? as usize;
+                *pc += 2;
+
+                if offset > *pc {
+                    return Err(VmError::InvalidJumpTarget((*pc - offset) as u16));
+                }
+
+                if self.registers[cond_reg as usize] == 0 {
+                    *pc -= offset;
+                }
+            }
+            JUMP_BACKWARD_IF_TRUE => {
+                // Format: [opcode, cond_reg, offset[2]]
+                if *pc + 2 >= bytecode.len() {
+                    return Err(VmError::UnexpectedEndOfProgram);
+                }
+                let cond_reg = bytecode[*pc];
+                *pc += 1;
+                let offset = self.read_u16(bytecode, *pc)? as usize;
+                *pc += 2;
+
+                if offset > *pc {
+                    return Err(VmError::InvalidJumpTarget((*pc - offset) as u16));
+                }
+
+                if self.registers[cond_reg as usize] != 0 {
+                    *pc -= offset;
+                }
+            }
             JMP => {
                 // Format: [opcode, target[2]]
                 if *pc + 1 >= bytecode.len() {
@@ -446,6 +503,26 @@ impl BytecodeBuilder {
         let target_bytes_pos = self.bytecode.len() as u16;
         self.bytecode.extend_from_slice(&0u16.to_le_bytes()); // Put zeros for target
         target_bytes_pos
+    }
+
+    pub fn jump_forward_if_true(&mut self, cond_reg: u8) -> u16 {
+        self.bytecode.push(JUMP_FORWARD_IF_TRUE);
+        self.bytecode.push(cond_reg);
+        let target_bytes_pos = self.bytecode.len() as u16;
+        self.bytecode.extend_from_slice(&0u16.to_le_bytes()); // Put zeros for target
+        target_bytes_pos
+    }
+
+    pub fn jump_backward_if_false(&mut self, cond_reg: u8, offset: u16) {
+        self.bytecode.push(JUMP_BACKWARD_IF_FALSE);
+        self.bytecode.push(cond_reg);
+        self.bytecode.extend_from_slice(&offset.to_le_bytes());
+    }
+
+    pub fn jump_backward_if_true(&mut self, cond_reg: u8, offset: u16) {
+        self.bytecode.push(JUMP_BACKWARD_IF_TRUE);
+        self.bytecode.push(cond_reg);
+        self.bytecode.extend_from_slice(&offset.to_le_bytes());
     }
 
     pub fn jmp(&mut self, target: u16) -> u16 {
@@ -634,8 +711,50 @@ pub fn print_bytecode(bytecode: &[u8]) {
                 let target = pc + offset as usize;
                 pc += 2;
                 println!(
-                    "{} JUMP_FORWARD_IF_FALSE r{}, {}",
-                    start_pc, cond_reg, target
+                    "{} JUMP_FORWARD_IF_FALSE r{}, {} (offset: {})",
+                    start_pc, cond_reg, target, offset
+                );
+            }
+            JUMP_FORWARD_IF_TRUE => {
+                if pc + 2 >= bytecode.len() {
+                    break;
+                }
+                let cond_reg = bytecode[pc];
+                pc += 1;
+                let offset = u16::from_le_bytes([bytecode[pc], bytecode[pc + 1]]);
+                let target = pc + offset as usize;
+                pc += 2;
+                println!(
+                    "{} JUMP_FORWARD_IF_TRUE r{}, {} (offset: {})",
+                    start_pc, cond_reg, target, offset
+                );
+            }
+            JUMP_BACKWARD_IF_FALSE => {
+                if pc + 2 >= bytecode.len() {
+                    break;
+                }
+                let cond_reg = bytecode[pc];
+                pc += 1;
+                let offset = u16::from_le_bytes([bytecode[pc], bytecode[pc + 1]]);
+                let target = pc.saturating_sub(offset as usize);
+                pc += 2;
+                println!(
+                    "{} JUMP_BACKWARD_IF_FALSE r{}, {} (offset: {})",
+                    start_pc, cond_reg, target, offset
+                );
+            }
+            JUMP_BACKWARD_IF_TRUE => {
+                if pc + 2 >= bytecode.len() {
+                    break;
+                }
+                let cond_reg = bytecode[pc];
+                pc += 1;
+                let offset = u16::from_le_bytes([bytecode[pc], bytecode[pc + 1]]);
+                let target = pc.saturating_sub(offset as usize);
+                pc += 2;
+                println!(
+                    "{} JUMP_BACKWARD_IF_TRUE r{}, {} (offset: {})",
+                    start_pc, cond_reg, target, offset
                 );
             }
             JMP => {

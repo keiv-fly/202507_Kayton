@@ -334,3 +334,168 @@ fn test_complex_f64_operations() {
     assert_eq!(vm.get_register_i64(0), 1); // 7.0 > 5.0 is true
     assert!((vm.get_register_f64(3) - 7.0).abs() < f64::EPSILON);
 }
+
+#[test]
+fn test_jump_forward_if_true() {
+    let mut vm = VirtualMachine::new();
+    let mut builder = BytecodeBuilder::new();
+
+    // Set up a true condition
+    builder.load_i64(1, 1); // r1 = 1 (true)
+
+    let jump_pos = builder.jump_forward_if_true(1); // Jump if r1 != 0
+    builder.load_i64(100, 0); // r0 = 100 (should be skipped)
+    let end_pos = builder.current_pos();
+    builder.load_i64(200, 0); // r0 = 200 (should be executed)
+
+    // Patch the jump to skip the first load
+    builder.patch_target(jump_pos, end_pos - jump_pos);
+
+    let bytecode = builder.build();
+
+    println!("=== test_jump_forward_if_true bytecode ===");
+    print_bytecode(&bytecode);
+    println!();
+
+    vm.eval_program(&bytecode).unwrap();
+    assert_eq!(vm.get_register_i64(0), 200); // Should have jumped to the second load
+}
+
+#[test]
+fn test_jump_forward_if_true_false_condition() {
+    let mut vm = VirtualMachine::new();
+    let mut builder = BytecodeBuilder::new();
+
+    // Set up a false condition
+    builder.load_i64(0, 1); // r1 = 0 (false)
+
+    let jump_pos = builder.jump_forward_if_true(1); // Don't jump since r1 == 0
+    builder.load_i64(100, 0); // r0 = 100 (should be executed)
+    let end_pos = builder.current_pos();
+    builder.load_i64(200, 0); // r0 = 200 (should also be executed)
+
+    // Patch the jump (though it won't be taken)
+    builder.patch_target(jump_pos, end_pos - jump_pos);
+
+    let bytecode = builder.build();
+
+    println!("=== test_jump_forward_if_true_false_condition bytecode ===");
+    print_bytecode(&bytecode);
+    println!();
+
+    vm.eval_program(&bytecode).unwrap();
+    assert_eq!(vm.get_register_i64(0), 200); // Should execute both loads, ending with 200
+}
+
+#[test]
+fn test_jump_backward_if_true_loop() {
+    let mut vm = VirtualMachine::new();
+    let mut builder = BytecodeBuilder::new();
+
+    builder.load_i64(3, 1); // r1 = 3 (counter)
+    builder.load_i64(0, 0); // r0 = 0 (accumulator)
+    builder.load_i64(1, 2); // r2 = 1 (decrement value)
+
+    // Loop start
+    let loop_start = builder.current_pos();
+    builder.add_i64(0, 1, 0); // r0 = r0 + r1
+    builder.sub_i64(1, 2, 1); // r1 = r1 - 1
+    builder.jump_backward_if_true(1, loop_start); // Jump back if r1 != 0
+
+    let bytecode = builder.build();
+
+    println!("=== test_jump_backward_if_true_loop bytecode ===");
+    print_bytecode(&bytecode);
+    println!();
+
+    vm.eval_program(&bytecode).unwrap();
+    assert_eq!(vm.get_register_i64(0), 6); // 3 + 2 + 1 = 6
+    assert_eq!(vm.get_register_i64(1), 0); // Counter should be 0
+}
+
+#[test]
+fn test_jump_backward_if_false_exit_loop() {
+    let mut vm = VirtualMachine::new();
+    let mut builder = BytecodeBuilder::new();
+
+    builder.load_i64(0, 1); // r1 = 0 (counter)
+    builder.load_i64(0, 0); // r0 = 0 (accumulator)
+    builder.load_i64(1, 2); // r2 = 1 (increment value)
+    builder.load_i64(5, 3); // r3 = 5 (target value)
+
+    // Loop start
+    let loop_start = builder.current_pos();
+    builder.add_i64(0, 2, 0); // r0 = r0 + 1
+    builder.add_i64(1, 2, 1); // r1 = r1 + 1
+    builder.gt_i64(1, 3, 4); // r4 = (r1 > 5) ? 1 : 0
+    let pos = builder.current_pos();
+    builder.jump_backward_if_false(4, pos - loop_start + 2); // Jump back if r1 <= 5
+
+    let bytecode = builder.build();
+
+    println!("=== test_jump_backward_if_false_exit_loop bytecode ===");
+    print_bytecode(&bytecode);
+    println!();
+
+    vm.eval_program(&bytecode).unwrap();
+    assert_eq!(vm.get_register_i64(0), 6); // Should increment 6 times
+    assert_eq!(vm.get_register_i64(1), 6); // Counter should be 6
+}
+
+#[test]
+fn test_nested_conditional_jumps() {
+    let mut vm = VirtualMachine::new();
+    let mut builder = BytecodeBuilder::new();
+
+    builder.load_i64(1, 1); // r1 = 1 (first condition - true)
+    builder.load_i64(0, 2); // r2 = 0 (second condition - false)
+
+    let jump1_pos = builder.jump_forward_if_true(1); // Jump if r1 != 0
+    builder.load_i64(100, 0); // r0 = 100 (should be skipped)
+    builder.jmp(0); // Jump to end (should be skipped)
+
+    // First jump target
+    let first_target = builder.current_pos();
+    let jump2_pos = builder.jump_forward_if_true(2); // Jump if r2 != 0 (it's 0, so don't jump)
+    builder.load_i64(200, 0); // r0 = 200 (should be executed)
+    let jump3_pos = builder.jmp(0); // Jump to end
+
+    // Second jump target (shouldn't be reached)
+    let second_target = builder.current_pos();
+    builder.load_i64(300, 0); // r0 = 300 (should be skipped)
+
+    let end_pos = builder.current_pos();
+
+    // Patch all the jumps
+    builder.patch_target(jump1_pos, first_target - jump1_pos);
+    builder.patch_target(jump2_pos, second_target - jump2_pos);
+    builder.patch_target(jump3_pos, end_pos);
+
+    let bytecode = builder.build();
+
+    println!("=== test_nested_conditional_jumps bytecode ===");
+    print_bytecode(&bytecode);
+    println!();
+
+    vm.eval_program(&bytecode).unwrap();
+    assert_eq!(vm.get_register_i64(0), 200);
+}
+
+#[test]
+fn test_backward_jump_bounds_check() {
+    let mut vm = VirtualMachine::new();
+    let mut builder = BytecodeBuilder::new();
+
+    builder.load_i64(1, 1); // r1 = 1
+    // Try to jump backward too far (offset larger than current position)
+    builder.jump_backward_if_true(1, 13); // This should cause an error when executed
+
+    let bytecode = builder.build();
+
+    println!("=== test_backward_jump_bounds_check bytecode ===");
+    print_bytecode(&bytecode);
+    println!();
+
+    let result = vm.eval_program(&bytecode);
+    assert!(matches!(result, Err(VmError::InvalidJumpTarget(_))));
+}
