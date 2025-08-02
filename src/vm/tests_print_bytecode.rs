@@ -584,24 +584,6 @@ fn test_format_consistent_with_print_bytecode() {
 
     let formatted = format_bytecode(&bytecode).expect("Should format successfully");
 
-    // Capture what print_bytecode would output
-    use std::io::{self, Write};
-
-    struct TestWriter {
-        buffer: Vec<u8>,
-    }
-
-    impl Write for TestWriter {
-        fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-            self.buffer.extend_from_slice(buf);
-            Ok(buf.len())
-        }
-
-        fn flush(&mut self) -> io::Result<()> {
-            Ok(())
-        }
-    }
-
     // Since we can't easily capture print! output in tests, we just verify
     // that format_bytecode produces reasonable output
     assert!(formatted.contains("LOAD_I64 r1, 123"));

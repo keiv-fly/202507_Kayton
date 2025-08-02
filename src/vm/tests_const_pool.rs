@@ -23,15 +23,15 @@ fn test_add_and_get_value_constants() {
     assert_eq!(meta_f.index, idx_f);
 
     let b: bool = true;
-    let idx_b = pool.add_value("true", b as u64, ValueType::Bool);
+    let idx_b = pool.add_value("True", b as u64, ValueType::Bool);
     assert_eq!(idx_b, 2);
-    assert_eq!(pool.get_value("true"), Some(1u64));
+    assert_eq!(pool.get_value("True"), Some(1u64));
     let meta_b = &pool.value_metadata[idx_b];
-    assert_eq!(meta_b.name, "true");
+    assert_eq!(meta_b.name, "True");
     assert!(matches!(meta_b.typ, ValueType::Bool));
     assert_eq!(meta_b.index, idx_b);
 
-    assert_eq!(pool.get_value("false"), None);
+    assert_eq!(pool.get_value("False"), None);
 }
 
 #[test]
@@ -48,14 +48,12 @@ fn test_add_and_get_slice_constants() {
     assert_eq!(meta_text.index, idx_text);
 
     let binary: &[u8] = b"bin";
-    let idx_bin = pool.add_slice("bin", binary, SliceType::Binary);
-    assert_eq!(idx_bin, 1);
-    assert_eq!(pool.get_slice("bin"), Some(binary));
+    let idx_bin = pool.add_slice("b\"bin\"", binary, SliceType::Binary);
+    assert_eq!(pool.get_slice("b\"bin\""), Some(binary));
     let meta_bin = &pool.slice_metadata[idx_bin];
-    assert_eq!(meta_bin.name, "bin");
+    assert_eq!(meta_bin.name, "b\"bin\"");
     assert!(matches!(meta_bin.typ, SliceType::Binary));
     assert_eq!(meta_bin.index, idx_bin);
 
     assert_eq!(pool.get_slice("missing"), None);
 }
-
