@@ -128,6 +128,30 @@ fn test_format_lte_i64() {
 }
 
 #[test]
+fn test_format_load_const_value() {
+    let mut builder = BytecodeBuilder::new();
+    builder.load_const_value(1, 2);
+    let bytecode = builder.build();
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
+    let lines: Vec<&str> = formatted.lines().collect();
+    assert_eq!(lines[0], "0 LOAD_CONST_VALUE r2, 1");
+    assert_eq!(lines[1], "pc=4");
+    assert_eq!(lines[2], "bytecode.len()=4");
+}
+
+#[test]
+fn test_format_load_const_slice() {
+    let mut builder = BytecodeBuilder::new();
+    builder.load_const_slice(3, 4);
+    let bytecode = builder.build();
+    let formatted = format_bytecode(&bytecode).expect("Should format successfully");
+    let lines: Vec<&str> = formatted.lines().collect();
+    assert_eq!(lines[0], "0 LOAD_CONST_SLICE r4, 3");
+    assert_eq!(lines[1], "pc=4");
+    assert_eq!(lines[2], "bytecode.len()=4");
+}
+
+#[test]
 fn test_format_add_f64() {
     let mut builder = BytecodeBuilder::new();
     builder.add_f64(1, 2, 3);

@@ -5,12 +5,14 @@ mod tests;
 mod tests_bytecode_builder;
 mod tests_const_pool;
 mod tests_print_bytecode;
+mod tests_const_opcodes;
 
 pub use bytecode_builder::BytecodeBuilder;
 pub use print_bytecode::print_bytecode;
 
 use std::fmt;
 use std::time::{Duration, Instant};
+use const_pool::ConstPool;
 
 // Instruction opcodes
 pub const LOAD_I64: u8 = 0x01;
@@ -36,11 +38,14 @@ pub const LTE_I64: u8 = 0x14;
 pub const GTE_F64: u8 = 0x15;
 pub const LT_F64: u8 = 0x16;
 pub const LTE_F64: u8 = 0x17;
+pub const LOAD_CONST_VALUE: u8 = 0x18;
+pub const LOAD_CONST_SLICE: u8 = 0x19;
 
 #[derive(Debug)]
 pub enum VmError {
     InvalidOpcode(u8),
     InvalidJumpTarget(u16),
+    InvalidConstIndex(u16),
     UnexpectedEndOfProgram,
     Timeout(Duration),
     // InvalidRegister(u8),
@@ -51,6 +56,9 @@ impl fmt::Display for VmError {
         match self {
             VmError::InvalidOpcode(opcode) => write!(f, "Invalid opcode: 0x{:02X}", opcode),
             VmError::InvalidJumpTarget(target) => write!(f, "Invalid jump target: {}", target),
+            VmError::InvalidConstIndex(index) => {
+                write!(f, "Invalid constant index: {}", index)
+            }
             VmError::UnexpectedEndOfProgram => write!(f, "Unexpected end of program"),
             VmError::Timeout(duration) => write!(f, "Execution timeout after {:?}", duration),
             // VmError::InvalidRegister(reg) => write!(f, "Invalid register: {}", reg),
@@ -62,13 +70,22 @@ impl std::error::Error for VmError {}
 
 pub struct VirtualMachine {
     pub registers: [u64; 256],
+    pub const_values: Vec<u64>,
+    pub const_slices: Vec<&'static [u8]>,
 }
 
 impl VirtualMachine {
     pub fn new() -> Self {
         Self {
             registers: [0u64; 256],
+            const_values: Vec::new(),
+            const_slices: Vec::new(),
         }
+    }
+
+    pub fn set_const_pool(&mut self, pool: &ConstPool) {
+        self.const_values = pool.values.clone();
+        self.const_slices = pool.slices.clone();
     }
 
     /// Interpret register value as i64
@@ -452,6 +469,39 @@ impl VirtualMachine {
                 *pc += 2;
                 let f64_val = self.get_f64(src);
                 self.set_i64(dst, f64_val as i64);
+            }
+            LOAD_CONST_VALUE => {
+                // Format: [opcode, dst, index[2]]
+                if *pc + 2 >= bytecode.len() {
+                    return Err(VmError::UnexpectedEndOfProgram);
+                }
+                let dst = bytecode[*pc];
+                let index = self.read_u16(bytecode, *pc + 1)? as usize;
+                *pc += 3;
+                let value = self
+                    .const_values
+                    .get(index)
+                    .ok_or(VmError::InvalidConstIndex(index as u16))?;
+                self.registers[dst as usize] = *value;
+            }
+            LOAD_CONST_SLICE => {
+                // Format: [opcode, dst, index[2]]
+                if *pc + 2 >= bytecode.len() {
+                    return Err(VmError::UnexpectedEndOfProgram);
+                }
+                let dst = bytecode[*pc] as usize;
+                let index = self.read_u16(bytecode, *pc + 1)? as usize;
+                *pc += 3;
+                let slice = self
+                    .const_slices
+                    .get(index)
+                    .ok_or(VmError::InvalidConstIndex(index as u16))?;
+                let ptr = slice.as_ptr() as u64;
+                let len = slice.len() as u64;
+                self.registers[dst] = ptr;
+                if dst + 1 < self.registers.len() {
+                    self.registers[dst + 1] = len;
+                }
             }
             _ => {
                 return Err(VmError::InvalidOpcode(opcode));

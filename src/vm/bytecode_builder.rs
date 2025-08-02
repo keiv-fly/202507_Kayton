@@ -163,6 +163,18 @@ impl BytecodeBuilder {
         self.bytecode.push(dst);
     }
 
+    pub fn load_const_value(&mut self, index: u16, reg: u8) {
+        self.bytecode.push(LOAD_CONST_VALUE);
+        self.bytecode.push(reg);
+        self.bytecode.extend_from_slice(&index.to_le_bytes());
+    }
+
+    pub fn load_const_slice(&mut self, index: u16, reg: u8) {
+        self.bytecode.push(LOAD_CONST_SLICE);
+        self.bytecode.push(reg);
+        self.bytecode.extend_from_slice(&index.to_le_bytes());
+    }
+
     pub fn i64_to_f64(&mut self, src: u8, dst: u8) {
         self.bytecode.push(I64_TO_F64);
         self.bytecode.push(src);
