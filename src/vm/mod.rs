@@ -1,4 +1,5 @@
 mod bytecode_builder;
+mod const_pool;
 mod print_bytecode;
 mod tests;
 mod tests_bytecode_builder;
