@@ -4,8 +4,8 @@ pub struct Registers {
 }
 
 impl Registers {
-    const FIXED_COUNT: usize = 256;
-    const SPILL_INIT: usize = 256;
+    pub const FIXED_COUNT: usize = 256;
+    pub const SPILL_INIT: usize = 256;
 
     pub fn new() -> Self {
         Self {

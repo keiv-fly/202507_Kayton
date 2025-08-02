@@ -47,8 +47,8 @@ pub const LOAD_CONST_SLICE: u8 = 0x19;
 #[derive(Debug)]
 pub enum VmError {
     InvalidOpcode(u8),
-    InvalidJumpTarget(u16),
-    InvalidConstIndex(u16),
+    InvalidJumpTarget(usize),
+    InvalidConstIndex(usize),
     UnexpectedEndOfProgram,
     Timeout(Duration),
     // InvalidRegister(u8),
@@ -374,7 +374,7 @@ impl VirtualMachine {
                 *pc += 2;
 
                 if target > bytecode.len() {
-                    return Err(VmError::InvalidJumpTarget(target as u16));
+                    return Err(VmError::InvalidJumpTarget(target));
                 }
 
                 if self.registers.get(cond_reg) == 0 {
@@ -392,7 +392,7 @@ impl VirtualMachine {
                 *pc += 2;
 
                 if target > bytecode.len() {
-                    return Err(VmError::InvalidJumpTarget(target as u16));
+                    return Err(VmError::InvalidJumpTarget(target));
                 }
 
                 if self.registers.get(cond_reg) != 0 {
@@ -410,7 +410,8 @@ impl VirtualMachine {
                 *pc += 2;
 
                 if offset > *pc {
-                    return Err(VmError::InvalidJumpTarget((*pc - offset) as u16));
+                    let invalid_target = (*pc as isize - offset as isize) as usize;
+                    return Err(VmError::InvalidJumpTarget(invalid_target));
                 }
 
                 if self.registers.get(cond_reg) == 0 {
@@ -428,9 +429,8 @@ impl VirtualMachine {
                 *pc += 2;
 
                 if offset > *pc {
-                    return Err(VmError::InvalidJumpTarget(
-                        (*pc as i64 - offset as i64) as u16,
-                    ));
+                    let invalid_target = (*pc as isize - offset as isize) as usize;
+                    return Err(VmError::InvalidJumpTarget(invalid_target));
                 }
 
                 if self.registers.get(cond_reg) != 0 {
@@ -446,7 +446,7 @@ impl VirtualMachine {
                 *pc += 2;
 
                 if target > bytecode.len() {
-                    return Err(VmError::InvalidJumpTarget(target as u16));
+                    return Err(VmError::InvalidJumpTarget(target));
                 }
 
                 *pc = target;
@@ -484,7 +484,7 @@ impl VirtualMachine {
                 let value = self
                     .const_values
                     .get(index)
-                    .ok_or(VmError::InvalidConstIndex(index as u16))?;
+                    .ok_or(VmError::InvalidConstIndex(index))?;
                 self.registers.set(dst, *value);
             }
             LOAD_CONST_SLICE => {
@@ -498,7 +498,7 @@ impl VirtualMachine {
                 let slice = self
                     .const_slices
                     .get(index)
-                    .ok_or(VmError::InvalidConstIndex(index as u16))?;
+                    .ok_or(VmError::InvalidConstIndex(index))?;
                 let ptr = slice.as_ptr() as u64;
                 let len = slice.len() as u64;
                 self.registers.set(dst, ptr);
