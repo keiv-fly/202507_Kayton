@@ -4,18 +4,18 @@ mod print_bytecode;
 mod registers;
 mod tests;
 mod tests_bytecode_builder;
+mod tests_const_opcodes;
 mod tests_const_pool;
 mod tests_print_bytecode;
-mod tests_const_opcodes;
 mod tests_registers;
 
 pub use bytecode_builder::BytecodeBuilder;
 pub use print_bytecode::print_bytecode;
 pub use registers::Registers;
 
+use const_pool::ConstPool;
 use std::fmt;
 use std::time::{Duration, Instant};
-use const_pool::ConstPool;
 
 // Instruction opcodes
 pub const LOAD_I64: u8 = 0x01;
@@ -73,22 +73,15 @@ impl std::error::Error for VmError {}
 
 pub struct VirtualMachine {
     pub registers: Registers,
-    pub const_values: Vec<u64>,
-    pub const_slices: Vec<&'static [u8]>,
+    pub const_pool: ConstPool,
 }
 
 impl VirtualMachine {
     pub fn new() -> Self {
         Self {
             registers: Registers::new(),
-            const_values: Vec::new(),
-            const_slices: Vec::new(),
+            const_pool: ConstPool::new(),
         }
-    }
-
-    pub fn set_const_pool(&mut self, pool: &ConstPool) {
-        self.const_values = pool.values.clone();
-        self.const_slices = pool.slices.clone();
     }
 
     /// Interpret register value as i64
@@ -482,7 +475,8 @@ impl VirtualMachine {
                 let index = self.read_u16(bytecode, *pc + 1)? as usize;
                 *pc += 3;
                 let value = self
-                    .const_values
+                    .const_pool
+                    .values
                     .get(index)
                     .ok_or(VmError::InvalidConstIndex(index))?;
                 self.registers.set(dst, *value);
@@ -496,7 +490,8 @@ impl VirtualMachine {
                 let index = self.read_u16(bytecode, *pc + 1)? as usize;
                 *pc += 3;
                 let slice = self
-                    .const_slices
+                    .const_pool
+                    .slices
                     .get(index)
                     .ok_or(VmError::InvalidConstIndex(index))?;
                 let ptr = slice.as_ptr() as u64;
