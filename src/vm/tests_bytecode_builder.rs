@@ -1,4 +1,5 @@
 use super::*;
+use super::const_pool::{ConstPool, SliceType, ValueType};
 use std::time::Duration;
 
 #[test]
@@ -443,6 +444,25 @@ fn test_complex_control_flow() {
     vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
         .unwrap();
     assert_eq!(vm.get_register_i64(0), -1); // Should identify as negative
+}
+
+#[test]
+fn test_builder_load_const_instructions() {
+    let mut pool = ConstPool::new();
+    pool.add_value("v", 1u64, ValueType::I64);
+    pool.add_slice("s", b"x", SliceType::Utf8Str);
+    let idx_v = *pool.value_name_to_index.get("v").unwrap() as u16;
+    let idx_s = *pool.slice_name_to_index.get("s").unwrap() as u16;
+
+    let mut builder = BytecodeBuilder::new();
+    builder.load_const_value(idx_v, 0);
+    builder.load_const_slice(idx_s, 1);
+    let bytecode = builder.build();
+    let expected = vec![
+        LOAD_CONST_VALUE, 0, idx_v as u8, (idx_v >> 8) as u8,
+        LOAD_CONST_SLICE, 1, idx_s as u8, (idx_s >> 8) as u8,
+    ];
+    assert_eq!(bytecode, expected);
 }
 
 #[test]

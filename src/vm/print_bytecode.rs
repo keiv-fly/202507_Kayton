@@ -67,6 +67,32 @@ pub fn format_bytecode(bytecode: &[u8]) -> Result<String, String> {
                 pc += 8;
                 output.push_str(&format!("{} LOAD_F64 r{}, {}\n", start_pc, reg, value));
             }
+            LOAD_CONST_VALUE => {
+                if pc + 2 >= bytecode.len() {
+                    return Err(format!(
+                        "Incomplete LOAD_CONST_VALUE instruction at pc {}: missing operands",
+                        start_pc
+                    ));
+                }
+                let reg = bytecode[pc];
+                pc += 1;
+                let index = u16::from_le_bytes([bytecode[pc], bytecode[pc + 1]]);
+                pc += 2;
+                output.push_str(&format!("{} LOAD_CONST_VALUE r{}, {}\n", start_pc, reg, index));
+            }
+            LOAD_CONST_SLICE => {
+                if pc + 2 >= bytecode.len() {
+                    return Err(format!(
+                        "Incomplete LOAD_CONST_SLICE instruction at pc {}: missing operands",
+                        start_pc
+                    ));
+                }
+                let reg = bytecode[pc];
+                pc += 1;
+                let index = u16::from_le_bytes([bytecode[pc], bytecode[pc + 1]]);
+                pc += 2;
+                output.push_str(&format!("{} LOAD_CONST_SLICE r{}, {}\n", start_pc, reg, index));
+            }
             ADD_I64 => {
                 if pc + 2 >= bytecode.len() {
                     return Err(format!(
