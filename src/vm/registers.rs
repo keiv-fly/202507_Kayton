@@ -1,0 +1,44 @@
+pub struct Registers {
+    fixed: [u64; Self::FIXED_COUNT],
+    spill: Vec<u64>,
+}
+
+impl Registers {
+    const FIXED_COUNT: usize = 256;
+    const SPILL_INIT: usize = 256;
+
+    pub fn new() -> Self {
+        Self {
+            fixed: [0; Self::FIXED_COUNT],
+            spill: Vec::with_capacity(Self::SPILL_INIT),
+        }
+    }
+
+    pub fn get(&self, index: usize) -> u64 {
+        if index < Self::FIXED_COUNT {
+            self.fixed[index]
+        } else {
+            let spill_index = index - Self::FIXED_COUNT;
+            self.spill.get(spill_index).copied().unwrap_or(0)
+        }
+    }
+
+    pub fn set(&mut self, index: usize, value: u64) {
+        if index < Self::FIXED_COUNT {
+            self.fixed[index] = value;
+        } else {
+            let spill_index = index - Self::FIXED_COUNT;
+            if spill_index >= self.spill.len() {
+                self.spill.resize(spill_index + 1, 0);
+            }
+            self.spill[spill_index] = value;
+        }
+    }
+
+}
+
+impl Default for Registers {
+    fn default() -> Self {
+        Self::new()
+    }
+}

@@ -1,14 +1,17 @@
 mod bytecode_builder;
 mod const_pool;
 mod print_bytecode;
+mod registers;
 mod tests;
 mod tests_bytecode_builder;
 mod tests_const_pool;
 mod tests_print_bytecode;
 mod tests_const_opcodes;
+mod tests_registers;
 
 pub use bytecode_builder::BytecodeBuilder;
 pub use print_bytecode::print_bytecode;
+pub use registers::Registers;
 
 use std::fmt;
 use std::time::{Duration, Instant};
@@ -69,7 +72,7 @@ impl fmt::Display for VmError {
 impl std::error::Error for VmError {}
 
 pub struct VirtualMachine {
-    pub registers: [u64; 256],
+    pub registers: Registers,
     pub const_values: Vec<u64>,
     pub const_slices: Vec<&'static [u8]>,
 }
@@ -77,7 +80,7 @@ pub struct VirtualMachine {
 impl VirtualMachine {
     pub fn new() -> Self {
         Self {
-            registers: [0u64; 256],
+            registers: Registers::new(),
             const_values: Vec::new(),
             const_slices: Vec::new(),
         }
@@ -89,23 +92,23 @@ impl VirtualMachine {
     }
 
     /// Interpret register value as i64
-    fn get_i64(&self, reg: u8) -> i64 {
-        self.registers[reg as usize] as i64
+    fn get_i64(&self, reg: usize) -> i64 {
+        self.registers.get(reg) as i64
     }
 
     /// Interpret register value as f64
-    fn get_f64(&self, reg: u8) -> f64 {
-        f64::from_bits(self.registers[reg as usize])
+    fn get_f64(&self, reg: usize) -> f64 {
+        f64::from_bits(self.registers.get(reg))
     }
 
     /// Store i64 value in register
-    fn set_i64(&mut self, reg: u8, value: i64) {
-        self.registers[reg as usize] = value as u64;
+    fn set_i64(&mut self, reg: usize, value: i64) {
+        self.registers.set(reg, value as u64);
     }
 
     /// Store f64 value in register
-    fn set_f64(&mut self, reg: u8, value: f64) {
-        self.registers[reg as usize] = value.to_bits();
+    fn set_f64(&mut self, reg: usize, value: f64) {
+        self.registers.set(reg, value.to_bits());
     }
 
     /// Read a u16 from bytecode at given position (little-endian)
@@ -167,7 +170,7 @@ impl VirtualMachine {
                 if *pc >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let reg = bytecode[*pc];
+                let reg = bytecode[*pc] as usize;
                 *pc += 1;
                 let value = self.read_i64(bytecode, *pc)?;
                 *pc += 8;
@@ -178,7 +181,7 @@ impl VirtualMachine {
                 if *pc >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let reg = bytecode[*pc];
+                let reg = bytecode[*pc] as usize;
                 *pc += 1;
                 let value = self.read_f64(bytecode, *pc)?;
                 *pc += 8;
@@ -189,9 +192,9 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let r1 = bytecode[*pc];
-                let r2 = bytecode[*pc + 1];
-                let dst = bytecode[*pc + 2];
+                let r1 = bytecode[*pc] as usize;
+                let r2 = bytecode[*pc + 1] as usize;
+                let dst = bytecode[*pc + 2] as usize;
                 *pc += 3;
                 let val1 = self.get_i64(r1);
                 let val2 = self.get_i64(r2);
@@ -202,9 +205,9 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let r1 = bytecode[*pc];
-                let r2 = bytecode[*pc + 1];
-                let dst = bytecode[*pc + 2];
+                let r1 = bytecode[*pc] as usize;
+                let r2 = bytecode[*pc + 1] as usize;
+                let dst = bytecode[*pc + 2] as usize;
                 *pc += 3;
                 let val1 = self.get_i64(r1);
                 let val2 = self.get_i64(r2);
@@ -215,9 +218,9 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let r1 = bytecode[*pc];
-                let r2 = bytecode[*pc + 1];
-                let dst = bytecode[*pc + 2];
+                let r1 = bytecode[*pc] as usize;
+                let r2 = bytecode[*pc + 1] as usize;
+                let dst = bytecode[*pc + 2] as usize;
                 *pc += 3;
                 let val1 = self.get_i64(r1);
                 let val2 = self.get_i64(r2);
@@ -228,9 +231,9 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let r1 = bytecode[*pc];
-                let r2 = bytecode[*pc + 1];
-                let dst = bytecode[*pc + 2];
+                let r1 = bytecode[*pc] as usize;
+                let r2 = bytecode[*pc + 1] as usize;
+                let dst = bytecode[*pc + 2] as usize;
                 *pc += 3;
                 let val1 = self.get_i64(r1);
                 let val2 = self.get_i64(r2);
@@ -240,9 +243,9 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let r1 = bytecode[*pc];
-                let r2 = bytecode[*pc + 1];
-                let dst = bytecode[*pc + 2];
+                let r1 = bytecode[*pc] as usize;
+                let r2 = bytecode[*pc + 1] as usize;
+                let dst = bytecode[*pc + 2] as usize;
                 *pc += 3;
                 let val1 = self.get_i64(r1);
                 let val2 = self.get_i64(r2);
@@ -252,9 +255,9 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let r1 = bytecode[*pc];
-                let r2 = bytecode[*pc + 1];
-                let dst = bytecode[*pc + 2];
+                let r1 = bytecode[*pc] as usize;
+                let r2 = bytecode[*pc + 1] as usize;
+                let dst = bytecode[*pc + 2] as usize;
                 *pc += 3;
                 let val1 = self.get_i64(r1);
                 let val2 = self.get_i64(r2);
@@ -264,9 +267,9 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let r1 = bytecode[*pc];
-                let r2 = bytecode[*pc + 1];
-                let dst = bytecode[*pc + 2];
+                let r1 = bytecode[*pc] as usize;
+                let r2 = bytecode[*pc + 1] as usize;
+                let dst = bytecode[*pc + 2] as usize;
                 *pc += 3;
                 let val1 = self.get_i64(r1);
                 let val2 = self.get_i64(r2);
@@ -277,9 +280,9 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let r1 = bytecode[*pc];
-                let r2 = bytecode[*pc + 1];
-                let dst = bytecode[*pc + 2];
+                let r1 = bytecode[*pc] as usize;
+                let r2 = bytecode[*pc + 1] as usize;
+                let dst = bytecode[*pc + 2] as usize;
                 *pc += 3;
                 let val1 = self.get_f64(r1);
                 let val2 = self.get_f64(r2);
@@ -290,9 +293,9 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let r1 = bytecode[*pc];
-                let r2 = bytecode[*pc + 1];
-                let dst = bytecode[*pc + 2];
+                let r1 = bytecode[*pc] as usize;
+                let r2 = bytecode[*pc + 1] as usize;
+                let dst = bytecode[*pc + 2] as usize;
                 *pc += 3;
                 let val1 = self.get_f64(r1);
                 let val2 = self.get_f64(r2);
@@ -303,9 +306,9 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let r1 = bytecode[*pc];
-                let r2 = bytecode[*pc + 1];
-                let dst = bytecode[*pc + 2];
+                let r1 = bytecode[*pc] as usize;
+                let r2 = bytecode[*pc + 1] as usize;
+                let dst = bytecode[*pc + 2] as usize;
                 *pc += 3;
                 let val1 = self.get_f64(r1);
                 let val2 = self.get_f64(r2);
@@ -316,9 +319,9 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let r1 = bytecode[*pc];
-                let r2 = bytecode[*pc + 1];
-                let dst = bytecode[*pc + 2];
+                let r1 = bytecode[*pc] as usize;
+                let r2 = bytecode[*pc + 1] as usize;
+                let dst = bytecode[*pc + 2] as usize;
                 *pc += 3;
                 let val1 = self.get_f64(r1);
                 let val2 = self.get_f64(r2);
@@ -328,9 +331,9 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let r1 = bytecode[*pc];
-                let r2 = bytecode[*pc + 1];
-                let dst = bytecode[*pc + 2];
+                let r1 = bytecode[*pc] as usize;
+                let r2 = bytecode[*pc + 1] as usize;
+                let dst = bytecode[*pc + 2] as usize;
                 *pc += 3;
                 let val1 = self.get_f64(r1);
                 let val2 = self.get_f64(r2);
@@ -340,9 +343,9 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let r1 = bytecode[*pc];
-                let r2 = bytecode[*pc + 1];
-                let dst = bytecode[*pc + 2];
+                let r1 = bytecode[*pc] as usize;
+                let r2 = bytecode[*pc + 1] as usize;
+                let dst = bytecode[*pc + 2] as usize;
                 *pc += 3;
                 let val1 = self.get_f64(r1);
                 let val2 = self.get_f64(r2);
@@ -352,9 +355,9 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let r1 = bytecode[*pc];
-                let r2 = bytecode[*pc + 1];
-                let dst = bytecode[*pc + 2];
+                let r1 = bytecode[*pc] as usize;
+                let r2 = bytecode[*pc + 1] as usize;
+                let dst = bytecode[*pc + 2] as usize;
                 *pc += 3;
                 let val1 = self.get_f64(r1);
                 let val2 = self.get_f64(r2);
@@ -365,7 +368,7 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let cond_reg = bytecode[*pc];
+                let cond_reg = bytecode[*pc] as usize;
                 *pc += 1;
                 let target = *pc + self.read_u16(bytecode, *pc)? as usize;
                 *pc += 2;
@@ -374,7 +377,7 @@ impl VirtualMachine {
                     return Err(VmError::InvalidJumpTarget(target as u16));
                 }
 
-                if self.registers[cond_reg as usize] == 0 {
+                if self.registers.get(cond_reg) == 0 {
                     *pc = target;
                 }
             }
@@ -383,7 +386,7 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let cond_reg = bytecode[*pc];
+                let cond_reg = bytecode[*pc] as usize;
                 *pc += 1;
                 let target = *pc + self.read_u16(bytecode, *pc)? as usize;
                 *pc += 2;
@@ -392,7 +395,7 @@ impl VirtualMachine {
                     return Err(VmError::InvalidJumpTarget(target as u16));
                 }
 
-                if self.registers[cond_reg as usize] != 0 {
+                if self.registers.get(cond_reg) != 0 {
                     *pc = target;
                 }
             }
@@ -401,7 +404,7 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let cond_reg = bytecode[*pc];
+                let cond_reg = bytecode[*pc] as usize;
                 *pc += 1;
                 let offset = self.read_u16(bytecode, *pc)? as usize;
                 *pc += 2;
@@ -410,7 +413,7 @@ impl VirtualMachine {
                     return Err(VmError::InvalidJumpTarget((*pc - offset) as u16));
                 }
 
-                if self.registers[cond_reg as usize] == 0 {
+                if self.registers.get(cond_reg) == 0 {
                     *pc -= offset;
                 }
             }
@@ -419,7 +422,7 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let cond_reg = bytecode[*pc];
+                let cond_reg = bytecode[*pc] as usize;
                 *pc += 1;
                 let offset = self.read_u16(bytecode, *pc)? as usize;
                 *pc += 2;
@@ -430,7 +433,7 @@ impl VirtualMachine {
                     ));
                 }
 
-                if self.registers[cond_reg as usize] != 0 {
+                if self.registers.get(cond_reg) != 0 {
                     *pc -= offset;
                 }
             }
@@ -453,8 +456,8 @@ impl VirtualMachine {
                 if *pc + 1 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let src = bytecode[*pc];
-                let dst = bytecode[*pc + 1];
+                let src = bytecode[*pc] as usize;
+                let dst = bytecode[*pc + 1] as usize;
                 *pc += 2;
                 let i64_val = self.get_i64(src);
                 self.set_f64(dst, i64_val as f64);
@@ -464,8 +467,8 @@ impl VirtualMachine {
                 if *pc + 1 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let src = bytecode[*pc];
-                let dst = bytecode[*pc + 1];
+                let src = bytecode[*pc] as usize;
+                let dst = bytecode[*pc + 1] as usize;
                 *pc += 2;
                 let f64_val = self.get_f64(src);
                 self.set_i64(dst, f64_val as i64);
@@ -475,14 +478,14 @@ impl VirtualMachine {
                 if *pc + 2 >= bytecode.len() {
                     return Err(VmError::UnexpectedEndOfProgram);
                 }
-                let dst = bytecode[*pc];
+                let dst = bytecode[*pc] as usize;
                 let index = self.read_u16(bytecode, *pc + 1)? as usize;
                 *pc += 3;
                 let value = self
                     .const_values
                     .get(index)
                     .ok_or(VmError::InvalidConstIndex(index as u16))?;
-                self.registers[dst as usize] = *value;
+                self.registers.set(dst, *value);
             }
             LOAD_CONST_SLICE => {
                 // Format: [opcode, dst, index[2]]
@@ -498,10 +501,8 @@ impl VirtualMachine {
                     .ok_or(VmError::InvalidConstIndex(index as u16))?;
                 let ptr = slice.as_ptr() as u64;
                 let len = slice.len() as u64;
-                self.registers[dst] = ptr;
-                if dst + 1 < self.registers.len() {
-                    self.registers[dst + 1] = len;
-                }
+                self.registers.set(dst, ptr);
+                self.registers.set(dst + 1, len);
             }
             _ => {
                 return Err(VmError::InvalidOpcode(opcode));
@@ -549,33 +550,33 @@ impl VirtualMachine {
     }
 
     /// Get register value as i64
-    pub fn get_register_i64(&self, reg: u8) -> i64 {
+    pub fn get_register_i64(&self, reg: usize) -> i64 {
         self.get_i64(reg)
     }
 
     /// Get register value as f64
-    pub fn get_register_f64(&self, reg: u8) -> f64 {
+    pub fn get_register_f64(&self, reg: usize) -> f64 {
         self.get_f64(reg)
     }
 
     /// Get raw register value
-    pub fn get_register_raw(&self, reg: u8) -> u64 {
-        self.registers[reg as usize]
+    pub fn get_register_raw(&self, reg: usize) -> u64 {
+        self.registers.get(reg)
     }
 
     /// Set register value as i64
-    pub fn set_register_i64(&mut self, reg: u8, value: i64) {
+    pub fn set_register_i64(&mut self, reg: usize, value: i64) {
         self.set_i64(reg, value);
     }
 
     /// Set register value as f64
-    pub fn set_register_f64(&mut self, reg: u8, value: f64) {
+    pub fn set_register_f64(&mut self, reg: usize, value: f64) {
         self.set_f64(reg, value);
     }
 
     /// Set raw register value
-    pub fn set_register_raw(&mut self, reg: u8, value: u64) {
-        self.registers[reg as usize] = value;
+    pub fn set_register_raw(&mut self, reg: usize, value: u64) {
+        self.registers.set(reg, value);
     }
 }
 
