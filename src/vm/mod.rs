@@ -2,16 +2,19 @@ mod bytecode_builder;
 mod const_pool;
 mod print_bytecode;
 mod registers;
+mod call;
 mod tests;
 mod tests_bytecode_builder;
 mod tests_const_opcodes;
 mod tests_const_pool;
 mod tests_print_bytecode;
 mod tests_registers;
+mod tests_call;
 
 pub use bytecode_builder::BytecodeBuilder;
 pub use print_bytecode::print_bytecode;
 pub use registers::Registers;
+pub use call::{HostFn, HostFunctionMetadata, HostFunctionRegistry, CallInfo};
 
 use const_pool::ConstPool;
 use std::fmt;
@@ -43,6 +46,7 @@ pub const LT_F64: u8 = 0x16;
 pub const LTE_F64: u8 = 0x17;
 pub const LOAD_CONST_VALUE: u8 = 0x18;
 pub const LOAD_CONST_SLICE: u8 = 0x19;
+pub const CALL_HOST: u8 = 0x1A;
 
 #[derive(Debug)]
 pub enum VmError {
@@ -51,6 +55,7 @@ pub enum VmError {
     InvalidConstIndex(usize),
     UnexpectedEndOfProgram,
     Timeout(Duration),
+    HostError(String),
     // InvalidRegister(u8),
 }
 
@@ -64,6 +69,7 @@ impl fmt::Display for VmError {
             }
             VmError::UnexpectedEndOfProgram => write!(f, "Unexpected end of program"),
             VmError::Timeout(duration) => write!(f, "Execution timeout after {:?}", duration),
+            VmError::HostError(err) => write!(f, "Host error: {}", err),
             // VmError::InvalidRegister(reg) => write!(f, "Invalid register: {}", reg),
         }
     }
@@ -74,6 +80,8 @@ impl std::error::Error for VmError {}
 pub struct VirtualMachine {
     pub registers: Registers,
     pub const_pool: ConstPool,
+    pub host_functions: HostFunctionRegistry,
+    pub call_stack: Vec<CallInfo>,
 }
 
 impl VirtualMachine {
@@ -81,6 +89,8 @@ impl VirtualMachine {
         Self {
             registers: Registers::new(),
             const_pool: ConstPool::new(),
+            host_functions: HostFunctionRegistry::new(),
+            call_stack: vec![CallInfo::Global { base: 0, top: 0 }],
         }
     }
 
@@ -498,6 +508,35 @@ impl VirtualMachine {
                 let len = slice.len() as u64;
                 self.registers.set(dst, ptr);
                 self.registers.set(dst + 1, len);
+            }
+            CALL_HOST => {
+                if *pc + 1 >= bytecode.len() {
+                    return Err(VmError::UnexpectedEndOfProgram);
+                }
+                let reg_index = self.read_u16(bytecode, *pc)? as usize;
+                *pc += 2;
+                let abs_index = self.current_base() + reg_index;
+                let fn_index = self.registers.get(abs_index) as usize;
+                let func = self
+                    .host_functions
+                    .funcs
+                    .get(fn_index)
+                    .ok_or(VmError::InvalidConstIndex(fn_index))?;
+                let meta = self
+                    .host_functions
+                    .metadata
+                    .get(fn_index)
+                    .ok_or(VmError::InvalidConstIndex(fn_index))?;
+                let base = abs_index;
+                let top = base + meta.num_registers.saturating_sub(1);
+                self.call_stack
+                    .push(CallInfo::CallHost { base, top, host_fn_index: fn_index });
+                self.registers.ensure_len(top + 1);
+                let result = func(base, &mut self.registers);
+                self.call_stack.pop();
+                if let Err(err) = result {
+                    return Err(VmError::HostError(err));
+                }
             }
             _ => {
                 return Err(VmError::InvalidOpcode(opcode));
