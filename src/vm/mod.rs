@@ -21,8 +21,6 @@ use std::fmt;
 use std::time::{Duration, Instant};
 
 // Instruction opcodes
-pub const LOAD_I64: u8 = 0x01;
-pub const LOAD_F64: u8 = 0x02;
 pub const ADD_I64: u8 = 0x03;
 pub const SUB_I64: u8 = 0x04;
 pub const MUL_I64: u8 = 0x05;
@@ -122,42 +120,6 @@ impl VirtualMachine {
         Ok(u16::from_le_bytes([bytecode[pos], bytecode[pos + 1]]))
     }
 
-    /// Read an i64 from bytecode at given position (little-endian)
-    fn read_i64(&self, bytecode: &[u8], pos: usize) -> Result<i64, VmError> {
-        if pos + 7 >= bytecode.len() {
-            return Err(VmError::UnexpectedEndOfProgram);
-        }
-        let bytes = [
-            bytecode[pos],
-            bytecode[pos + 1],
-            bytecode[pos + 2],
-            bytecode[pos + 3],
-            bytecode[pos + 4],
-            bytecode[pos + 5],
-            bytecode[pos + 6],
-            bytecode[pos + 7],
-        ];
-        Ok(i64::from_le_bytes(bytes))
-    }
-
-    /// Read an f64 from bytecode at given position (little-endian)
-    fn read_f64(&self, bytecode: &[u8], pos: usize) -> Result<f64, VmError> {
-        if pos + 7 >= bytecode.len() {
-            return Err(VmError::UnexpectedEndOfProgram);
-        }
-        let bytes = [
-            bytecode[pos],
-            bytecode[pos + 1],
-            bytecode[pos + 2],
-            bytecode[pos + 3],
-            bytecode[pos + 4],
-            bytecode[pos + 5],
-            bytecode[pos + 6],
-            bytecode[pos + 7],
-        ];
-        Ok(f64::from_le_bytes(bytes))
-    }
-
     /// Execute a single instruction
     fn execute_instruction(&mut self, bytecode: &[u8], pc: &mut usize) -> Result<(), VmError> {
         if *pc >= bytecode.len() {
@@ -168,28 +130,6 @@ impl VirtualMachine {
         *pc += 1;
 
         match opcode {
-            LOAD_I64 => {
-                // Format: [opcode, reg, i64_value[8]]
-                if *pc >= bytecode.len() {
-                    return Err(VmError::UnexpectedEndOfProgram);
-                }
-                let reg = bytecode[*pc] as usize;
-                *pc += 1;
-                let value = self.read_i64(bytecode, *pc)?;
-                *pc += 8;
-                self.set_i64(reg, value);
-            }
-            LOAD_F64 => {
-                // Format: [opcode, reg, f64_value[8]]
-                if *pc >= bytecode.len() {
-                    return Err(VmError::UnexpectedEndOfProgram);
-                }
-                let reg = bytecode[*pc] as usize;
-                *pc += 1;
-                let value = self.read_f64(bytecode, *pc)?;
-                *pc += 8;
-                self.set_f64(reg, value);
-            }
             ADD_I64 => {
                 // Format: [opcode, r1, r2, dst]
                 if *pc + 2 >= bytecode.len() {

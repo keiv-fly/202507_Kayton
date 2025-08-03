@@ -11,62 +11,6 @@ pub fn format_bytecode(bytecode: &[u8]) -> Result<String, String> {
         pc += 1;
 
         match opcode {
-            LOAD_I64 => {
-                if pc >= bytecode.len() {
-                    return Err(format!(
-                        "Incomplete LOAD_I64 instruction at pc {}: missing register",
-                        start_pc
-                    ));
-                }
-                let reg = bytecode[pc];
-                pc += 1;
-                if pc + 7 >= bytecode.len() {
-                    return Err(format!(
-                        "Incomplete LOAD_I64 instruction at pc {}: missing value bytes",
-                        start_pc
-                    ));
-                }
-                let value = i64::from_le_bytes([
-                    bytecode[pc],
-                    bytecode[pc + 1],
-                    bytecode[pc + 2],
-                    bytecode[pc + 3],
-                    bytecode[pc + 4],
-                    bytecode[pc + 5],
-                    bytecode[pc + 6],
-                    bytecode[pc + 7],
-                ]);
-                pc += 8;
-                output.push_str(&format!("{} LOAD_I64 r{}, {}\n", start_pc, reg, value));
-            }
-            LOAD_F64 => {
-                if pc >= bytecode.len() {
-                    return Err(format!(
-                        "Incomplete LOAD_F64 instruction at pc {}: missing register",
-                        start_pc
-                    ));
-                }
-                let reg = bytecode[pc];
-                pc += 1;
-                if pc + 7 >= bytecode.len() {
-                    return Err(format!(
-                        "Incomplete LOAD_F64 instruction at pc {}: missing value bytes",
-                        start_pc
-                    ));
-                }
-                let value = f64::from_le_bytes([
-                    bytecode[pc],
-                    bytecode[pc + 1],
-                    bytecode[pc + 2],
-                    bytecode[pc + 3],
-                    bytecode[pc + 4],
-                    bytecode[pc + 5],
-                    bytecode[pc + 6],
-                    bytecode[pc + 7],
-                ]);
-                pc += 8;
-                output.push_str(&format!("{} LOAD_F64 r{}, {}\n", start_pc, reg, value));
-            }
             LOAD_CONST_VALUE => {
                 if pc + 2 >= bytecode.len() {
                     return Err(format!(
