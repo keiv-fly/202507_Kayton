@@ -1,5 +1,5 @@
 mod bytecode_builder;
-mod const_pool;
+pub mod const_pool;
 mod print_bytecode;
 mod registers;
 mod call;
