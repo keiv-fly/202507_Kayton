@@ -2,8 +2,7 @@ use super::*;
 
 #[test]
 fn program1_tokens() {
-    let input = r#"
-x = 12
+    let input = r#"x = 12
 x = x + 1
 print(x)
 "#;
@@ -11,22 +10,22 @@ print(x)
     assert_eq!(
         tokens,
         vec![
-            Stmt::Assign {
-                name: "x".to_string(),
-                expr: Expr::Int(12),
-            },
-            Stmt::Assign {
-                name: "x".to_string(),
-                expr: Expr::Binary {
-                    left: Box::new(Expr::Ident("x".to_string())),
-                    op: BinOp::Add,
-                    right: Box::new(Expr::Int(1)),
-                },
-            },
-            Stmt::ExprStmt(Expr::Call {
-                func: Box::new(Expr::Ident("print".to_string())),
-                args: vec![Expr::Ident("x".to_string())],
-            }),
+            Token::Ident("x".to_string()),
+            Token::Equal,
+            Token::Int(12),
+            Token::Newline,
+            Token::Ident("x".to_string()),
+            Token::Equal,
+            Token::Ident("x".to_string()),
+            Token::Plus,
+            Token::Int(1),
+            Token::Newline,
+            Token::Ident("print".to_string()),
+            Token::LParen,
+            Token::Ident("x".to_string()),
+            Token::RParen,
+            Token::Newline,
+            Token::EOF,
         ]
     );
 }
@@ -37,35 +36,39 @@ fn program2_tokens() {
     let tokens = Lexer::new(input).tokenize();
     assert_eq!(
         tokens,
-        vec![Stmt::ExprStmt(Expr::Call {
-            func: Box::new(Expr::Ident("print".to_string())),
-            args: vec![Expr::Str("Hello, World".to_string())],
-        }),]
+        vec![
+            Token::Ident("print".to_string()),
+            Token::LParen,
+            Token::Str("Hello, World".to_string()),
+            Token::RParen,
+            Token::EOF,
+        ]
     );
 }
 
 #[test]
 fn program3_tokens() {
-    let input = r#"
-x = 12
+    let input = r#"x = 12
 print(f"{x}")
 "#;
     let tokens = Lexer::new(input).tokenize();
     assert_eq!(
         tokens,
         vec![
-            Stmt::Assign {
-                name: "x".to_string(),
-                expr: Expr::Int(12),
-            },
-            Stmt::ExprStmt(Expr::Call {
-                func: Box::new(Expr::Ident("print".to_string())),
-                args: vec![Expr::InterpolatedString(vec![
-                    StringPart::Text("".to_string()),
-                    StringPart::Expr(Box::new(Expr::Ident("x".to_string()))),
-                    StringPart::Text("".to_string()),
-                ])],
-            }),
+            Token::Ident("x".to_string()),
+            Token::Equal,
+            Token::Int(12),
+            Token::Newline,
+            Token::Ident("print".to_string()),
+            Token::LParen,
+            Token::InterpolatedString(vec![
+                FStringPart::Text("".to_string()),
+                FStringPart::Expr("x".to_string()),
+                FStringPart::Text("".to_string()),
+            ]),
+            Token::RParen,
+            Token::Newline,
+            Token::EOF,
         ]
     );
 }
