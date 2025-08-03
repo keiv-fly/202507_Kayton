@@ -53,18 +53,6 @@ impl BytecodeBuilder {
 
     // === BASIC INSTRUCTIONS ===
 
-    pub fn load_i64(&mut self, value: i64, reg: u8) {
-        self.bytecode.push(LOAD_I64);
-        self.bytecode.push(reg);
-        self.bytecode.extend_from_slice(&value.to_le_bytes());
-    }
-
-    pub fn load_f64(&mut self, value: f64, reg: u8) {
-        self.bytecode.push(LOAD_F64);
-        self.bytecode.push(reg);
-        self.bytecode.extend_from_slice(&value.to_le_bytes());
-    }
-
     pub fn call_host(&mut self, reg_fn_index_and_base: u16) {
         self.bytecode.push(CALL_HOST);
         self.bytecode.extend_from_slice(&reg_fn_index_and_base.to_le_bytes());

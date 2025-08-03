@@ -1,48 +1,73 @@
 use super::*;
 use crate::vm::print_bytecode::format_bytecode;
+use super::const_pool::{ValueType, SliceType};
+
+fn add_i64(vm: &mut VirtualMachine, value: i64) -> u16 {
+    vm.const_pool.add_value("", value as u64, ValueType::I64) as u16
+}
+
+fn add_f64(vm: &mut VirtualMachine, value: f64) -> u16 {
+    vm.const_pool.add_value("", value.to_bits(), ValueType::F64) as u16
+}
+
+fn load_i64_const(vm: &mut VirtualMachine, builder: &mut BytecodeBuilder, value: i64, reg: u8) -> u16 {
+    let idx = add_i64(vm, value);
+    builder.load_const_value(idx, reg);
+    idx
+}
+
+fn load_f64_const(vm: &mut VirtualMachine, builder: &mut BytecodeBuilder, value: f64, reg: u8) -> u16 {
+    let idx = add_f64(vm, value);
+    builder.load_const_value(idx, reg);
+    idx
+}
 
 #[test]
 fn test_format_load_i64() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
-    builder.load_i64(42, 1);
+    let idx = load_i64_const(&mut vm, &mut builder, 42, 1);
     let bytecode = builder.build();
 
     let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
-    assert_eq!(lines[0], "0 LOAD_I64 r1, 42");
-    assert_eq!(lines[1], "pc=10");
-    assert_eq!(lines[2], "bytecode.len()=10");
+    assert_eq!(lines[0], format!("0 LOAD_CONST_VALUE r1, {}", idx));
+    assert_eq!(lines[1], "pc=4");
+    assert_eq!(lines[2], "bytecode.len()=4");
 }
 
 #[test]
 fn test_format_load_f64() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
-    builder.load_f64(3.14159, 2);
+    let idx = load_f64_const(&mut vm, &mut builder, 3.14159, 2);
     let bytecode = builder.build();
 
     let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
-    assert_eq!(lines[0], "0 LOAD_F64 r2, 3.14159");
-    assert_eq!(lines[1], "pc=10");
-    assert_eq!(lines[2], "bytecode.len()=10");
+    assert_eq!(lines[0], format!("0 LOAD_CONST_VALUE r2, {}", idx));
+    assert_eq!(lines[1], "pc=4");
+    assert_eq!(lines[2], "bytecode.len()=4");
 }
 
 #[test]
 fn test_format_negative_i64() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
-    builder.load_i64(-100, 0);
+    let idx = load_i64_const(&mut vm, &mut builder, -100, 0);
     let bytecode = builder.build();
 
     let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
-    assert_eq!(lines[0], "0 LOAD_I64 r0, -100");
+    assert_eq!(lines[0], format!("0 LOAD_CONST_VALUE r0, {}", idx));
 }
 
 #[test]
 fn test_format_add_i64() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.add_i64(1, 2, 3);
     let bytecode = builder.build();
@@ -57,6 +82,7 @@ fn test_format_add_i64() {
 
 #[test]
 fn test_format_sub_i64() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.sub_i64(5, 6, 7);
     let bytecode = builder.build();
@@ -69,6 +95,7 @@ fn test_format_sub_i64() {
 
 #[test]
 fn test_format_mul_i64() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.mul_i64(10, 11, 12);
     let bytecode = builder.build();
@@ -81,6 +108,7 @@ fn test_format_mul_i64() {
 
 #[test]
 fn test_format_gt_i64() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.gt_i64(20, 21, 22);
     let bytecode = builder.build();
@@ -93,6 +121,7 @@ fn test_format_gt_i64() {
 
 #[test]
 fn test_format_gte_i64() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.gte_i64(1, 2, 3);
     let bytecode = builder.build();
@@ -105,6 +134,7 @@ fn test_format_gte_i64() {
 
 #[test]
 fn test_format_lt_i64() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.lt_i64(4, 5, 6);
     let bytecode = builder.build();
@@ -117,6 +147,7 @@ fn test_format_lt_i64() {
 
 #[test]
 fn test_format_lte_i64() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.lte_i64(7, 8, 9);
     let bytecode = builder.build();
@@ -129,30 +160,37 @@ fn test_format_lte_i64() {
 
 #[test]
 fn test_format_load_const_value() {
+    let mut vm = VirtualMachine::new();
+    let idx = add_i64(&mut vm, 1);
     let mut builder = BytecodeBuilder::new();
-    builder.load_const_value(1, 2);
+    builder.load_const_value(idx, 2);
     let bytecode = builder.build();
     let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
-    assert_eq!(lines[0], "0 LOAD_CONST_VALUE r2, 1");
+    assert_eq!(lines[0], format!("0 LOAD_CONST_VALUE r2, {}", idx));
     assert_eq!(lines[1], "pc=4");
     assert_eq!(lines[2], "bytecode.len()=4");
 }
 
 #[test]
 fn test_format_load_const_slice() {
+    let mut vm = VirtualMachine::new();
+    let idx = vm
+        .const_pool
+        .add_slice("", b"x", SliceType::Utf8Str) as u16;
     let mut builder = BytecodeBuilder::new();
-    builder.load_const_slice(3, 4);
+    builder.load_const_slice(idx, 4);
     let bytecode = builder.build();
     let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
-    assert_eq!(lines[0], "0 LOAD_CONST_SLICE r4, 3");
+    assert_eq!(lines[0], format!("0 LOAD_CONST_SLICE r4, {}", idx));
     assert_eq!(lines[1], "pc=4");
     assert_eq!(lines[2], "bytecode.len()=4");
 }
 
 #[test]
 fn test_format_add_f64() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.add_f64(1, 2, 3);
     let bytecode = builder.build();
@@ -165,6 +203,7 @@ fn test_format_add_f64() {
 
 #[test]
 fn test_format_sub_f64() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.sub_f64(4, 5, 6);
     let bytecode = builder.build();
@@ -177,6 +216,7 @@ fn test_format_sub_f64() {
 
 #[test]
 fn test_format_mul_f64() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.mul_f64(7, 8, 9);
     let bytecode = builder.build();
@@ -189,6 +229,7 @@ fn test_format_mul_f64() {
 
 #[test]
 fn test_format_gt_f64() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.gt_f64(15, 16, 17);
     let bytecode = builder.build();
@@ -201,6 +242,7 @@ fn test_format_gt_f64() {
 
 #[test]
 fn test_format_gte_f64() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.gte_f64(1, 2, 3);
     let bytecode = builder.build();
@@ -213,6 +255,7 @@ fn test_format_gte_f64() {
 
 #[test]
 fn test_format_lt_f64() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.lt_f64(4, 5, 6);
     let bytecode = builder.build();
@@ -225,6 +268,7 @@ fn test_format_lt_f64() {
 
 #[test]
 fn test_format_lte_f64() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.lte_f64(7, 8, 9);
     let bytecode = builder.build();
@@ -237,6 +281,7 @@ fn test_format_lte_f64() {
 
 #[test]
 fn test_format_type_conversions() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.i64_to_f64(1, 2);
     builder.f64_to_i64(3, 4);
@@ -253,10 +298,11 @@ fn test_format_type_conversions() {
 
 #[test]
 fn test_format_jump_forward_if_false() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
-    builder.load_i64(1, 1);
+    let idx1 = load_i64_const(&mut vm, &mut builder, 1, 1);
     let target_pos = builder.jump_forward_if_false(1);
-    builder.load_i64(100, 2);
+    let idx100 = load_i64_const(&mut vm, &mut builder, 100, 2);
     let end_pos = builder.current_pos();
     builder.patch_target(target_pos, end_pos - target_pos);
     let bytecode = builder.build();
@@ -264,18 +310,19 @@ fn test_format_jump_forward_if_false() {
     let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
-    assert_eq!(lines[0], "0 LOAD_I64 r1, 1");
-    assert!(lines[1].starts_with("10 JUMP_FORWARD_IF_FALSE r1,"));
+    assert_eq!(lines[0], format!("0 LOAD_CONST_VALUE r1, {}", idx1));
+    assert!(lines[1].starts_with("4 JUMP_FORWARD_IF_FALSE r1,"));
     assert!(lines[1].contains("(offset:"));
-    assert_eq!(lines[2], "14 LOAD_I64 r2, 100");
+    assert_eq!(lines[2], format!("8 LOAD_CONST_VALUE r2, {}", idx100));
 }
 
 #[test]
 fn test_format_jump_forward_if_true() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
-    builder.load_i64(1, 1);
+    let idx1 = load_i64_const(&mut vm, &mut builder, 1, 1);
     let target_pos = builder.jump_forward_if_true(1);
-    builder.load_i64(100, 2);
+    let idx100 = load_i64_const(&mut vm, &mut builder, 100, 2);
     let end_pos = builder.current_pos();
     builder.patch_target(target_pos, end_pos - target_pos);
     let bytecode = builder.build();
@@ -283,43 +330,46 @@ fn test_format_jump_forward_if_true() {
     let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
-    assert_eq!(lines[0], "0 LOAD_I64 r1, 1");
-    assert!(lines[1].starts_with("10 JUMP_FORWARD_IF_TRUE r1,"));
+    assert_eq!(lines[0], format!("0 LOAD_CONST_VALUE r1, {}", idx1));
+    assert!(lines[1].starts_with("4 JUMP_FORWARD_IF_TRUE r1,"));
     assert!(lines[1].contains("(offset:"));
 }
 
 #[test]
 fn test_format_jump_backward_if_false() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
-    builder.load_i64(1, 1);
+    let idx1 = load_i64_const(&mut vm, &mut builder, 1, 1);
     builder.jump_backward_if_false(1, 10);
     let bytecode = builder.build();
 
     let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
-    assert_eq!(lines[0], "0 LOAD_I64 r1, 1");
-    assert!(lines[1].starts_with("10 JUMP_BACKWARD_IF_FALSE r1,"));
+    assert_eq!(lines[0], format!("0 LOAD_CONST_VALUE r1, {}", idx1));
+    assert!(lines[1].starts_with("4 JUMP_BACKWARD_IF_FALSE r1,"));
     assert!(lines[1].contains("(offset: 10)"));
 }
 
 #[test]
 fn test_format_jump_backward_if_true() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
-    builder.load_i64(1, 1);
+    let idx1 = load_i64_const(&mut vm, &mut builder, 1, 1);
     builder.jump_backward_if_true(1, 5);
     let bytecode = builder.build();
 
     let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
-    assert_eq!(lines[0], "0 LOAD_I64 r1, 1");
-    assert!(lines[1].starts_with("10 JUMP_BACKWARD_IF_TRUE r1,"));
+    assert_eq!(lines[0], format!("0 LOAD_CONST_VALUE r1, {}", idx1));
+    assert!(lines[1].starts_with("4 JUMP_BACKWARD_IF_TRUE r1,"));
     assert!(lines[1].contains("(offset: 5)"));
 }
 
 #[test]
 fn test_format_jmp() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.jmp_to(42);
     let bytecode = builder.build();
@@ -347,24 +397,25 @@ fn test_format_unknown_opcode() {
 
 #[test]
 fn test_format_complex_program() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
-    builder.load_i64(10, 1);
-    builder.load_i64(5, 2);
+    let idx10 = load_i64_const(&mut vm, &mut builder, 10, 1);
+    let idx5 = load_i64_const(&mut vm, &mut builder, 5, 2);
     builder.add_i64(1, 2, 3);
     builder.i64_to_f64(3, 4);
-    builder.load_f64(2.5, 5);
+    let idx25 = load_f64_const(&mut vm, &mut builder, 2.5, 5);
     builder.mul_f64(4, 5, 6);
     let bytecode = builder.build();
 
     let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
-    assert_eq!(lines[0], "0 LOAD_I64 r1, 10");
-    assert_eq!(lines[1], "10 LOAD_I64 r2, 5");
-    assert_eq!(lines[2], "20 ADD_I64 r1, r2, r3");
-    assert_eq!(lines[3], "24 I64_TO_F64 r3, r4");
-    assert_eq!(lines[4], "27 LOAD_F64 r5, 2.5");
-    assert_eq!(lines[5], "37 MUL_F64 r4, r5, r6");
+    assert_eq!(lines[0], format!("0 LOAD_CONST_VALUE r1, {}", idx10));
+    assert_eq!(lines[1], format!("4 LOAD_CONST_VALUE r2, {}", idx5));
+    assert_eq!(lines[2], "8 ADD_I64 r1, r2, r3");
+    assert_eq!(lines[3], "12 I64_TO_F64 r3, r4");
+    assert_eq!(lines[4], format!("15 LOAD_CONST_VALUE r5, {}", idx25));
+    assert_eq!(lines[5], "19 MUL_F64 r4, r5, r6");
 }
 
 #[test]
@@ -382,51 +433,39 @@ fn test_format_empty_bytecode() {
 // Updated tests for incomplete instructions - now expecting errors
 
 #[test]
-fn test_format_incomplete_load_i64() {
-    // LOAD_I64 opcode with register but missing value
-    let bytecode = vec![LOAD_I64, 1, 0x42]; // Missing 7 more bytes for i64
+fn test_format_incomplete_load_const_value() {
+    // LOAD_CONST_VALUE opcode with register but missing index byte
+    let bytecode = vec![LOAD_CONST_VALUE, 1, 0x01]; // Missing one more byte for index
 
     let result = format_bytecode(&bytecode);
     assert!(result.is_err());
     let error = result.unwrap_err();
-    assert!(error.contains("Incomplete LOAD_I64 instruction"));
-    assert!(error.contains("missing value bytes"));
+    assert!(error.contains("Incomplete LOAD_CONST_VALUE instruction"));
+    assert!(error.contains("missing operands"));
 }
 
 #[test]
-fn test_format_incomplete_load_i64_missing_register() {
-    // LOAD_I64 opcode with no register
-    let bytecode = vec![LOAD_I64]; // Missing register and value
+fn test_format_incomplete_load_const_value_missing_register() {
+    // LOAD_CONST_VALUE opcode with no register and index
+    let bytecode = vec![LOAD_CONST_VALUE]; // Missing register and index
 
     let result = format_bytecode(&bytecode);
     assert!(result.is_err());
     let error = result.unwrap_err();
-    assert!(error.contains("Incomplete LOAD_I64 instruction"));
-    assert!(error.contains("missing register"));
+    assert!(error.contains("Incomplete LOAD_CONST_VALUE instruction"));
+    assert!(error.contains("missing operands"));
 }
 
 #[test]
-fn test_format_incomplete_load_f64() {
-    // LOAD_F64 opcode with register but missing value
-    let bytecode = vec![LOAD_F64, 2]; // Missing 8 bytes for f64
+fn test_format_incomplete_load_const_slice() {
+    // LOAD_CONST_SLICE opcode with register but missing index
+    let bytecode = vec![LOAD_CONST_SLICE, 2]; // Missing 2 bytes for index
 
     let result = format_bytecode(&bytecode);
     assert!(result.is_err());
     let error = result.unwrap_err();
-    assert!(error.contains("Incomplete LOAD_F64 instruction"));
-    assert!(error.contains("missing value bytes"));
-}
-
-#[test]
-fn test_format_incomplete_load_f64_missing_register() {
-    // LOAD_F64 opcode with no register
-    let bytecode = vec![LOAD_F64]; // Missing register and value
-
-    let result = format_bytecode(&bytecode);
-    assert!(result.is_err());
-    let error = result.unwrap_err();
-    assert!(error.contains("Incomplete LOAD_F64 instruction"));
-    assert!(error.contains("missing register"));
+    assert!(error.contains("Incomplete LOAD_CONST_SLICE instruction"));
+    assert!(error.contains("missing operands"));
 }
 
 #[test]
@@ -503,68 +542,72 @@ fn test_format_incomplete_type_conversion() {
 
 #[test]
 fn test_format_various_register_numbers() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
-    builder.load_i64(1, 0); // Register 0
-    builder.load_i64(2, 127); // Register 127
-    builder.load_i64(3, 255); // Register 255 (max)
+    let idx0 = load_i64_const(&mut vm, &mut builder, 1, 0); // Register 0
+    let idx127 = load_i64_const(&mut vm, &mut builder, 2, 127); // Register 127
+    let idx255 = load_i64_const(&mut vm, &mut builder, 3, 255); // Register 255 (max)
     let bytecode = builder.build();
 
     let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
-    assert_eq!(lines[0], "0 LOAD_I64 r0, 1");
-    assert_eq!(lines[1], "10 LOAD_I64 r127, 2");
-    assert_eq!(lines[2], "20 LOAD_I64 r255, 3");
+    assert_eq!(lines[0], format!("0 LOAD_CONST_VALUE r0, {}", idx0));
+    assert_eq!(lines[1], format!("4 LOAD_CONST_VALUE r127, {}", idx127));
+    assert_eq!(lines[2], format!("8 LOAD_CONST_VALUE r255, {}", idx255));
 }
 
 #[test]
 fn test_format_extreme_values() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
-    builder.load_i64(i64::MAX, 1);
-    builder.load_i64(i64::MIN, 2);
-    builder.load_f64(f64::MAX, 3);
-    builder.load_f64(f64::MIN, 4);
+    let idx_max = load_i64_const(&mut vm, &mut builder, i64::MAX, 1);
+    let idx_min = load_i64_const(&mut vm, &mut builder, i64::MIN, 2);
+    let idx_fmax = load_f64_const(&mut vm, &mut builder, f64::MAX, 3);
+    let idx_fmin = load_f64_const(&mut vm, &mut builder, f64::MIN, 4);
     let bytecode = builder.build();
 
     let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
-    assert_eq!(lines[0], format!("0 LOAD_I64 r1, {}", i64::MAX));
-    assert_eq!(lines[1], format!("10 LOAD_I64 r2, {}", i64::MIN));
-    assert_eq!(lines[2], format!("20 LOAD_F64 r3, {}", f64::MAX));
-    assert_eq!(lines[3], format!("30 LOAD_F64 r4, {}", f64::MIN));
+    assert_eq!(lines[0], format!("0 LOAD_CONST_VALUE r1, {}", idx_max));
+    assert_eq!(lines[1], format!("4 LOAD_CONST_VALUE r2, {}", idx_min));
+    assert_eq!(lines[2], format!("8 LOAD_CONST_VALUE r3, {}", idx_fmax));
+    assert_eq!(lines[3], format!("12 LOAD_CONST_VALUE r4, {}", idx_fmin));
 }
 
 #[test]
 fn test_format_special_f64_values() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
-    builder.load_f64(f64::INFINITY, 1);
-    builder.load_f64(f64::NEG_INFINITY, 2);
-    builder.load_f64(f64::NAN, 3);
-    builder.load_f64(0.0, 4);
-    builder.load_f64(-0.0, 5);
+    let idx_inf = load_f64_const(&mut vm, &mut builder, f64::INFINITY, 1);
+    let idx_neginf = load_f64_const(&mut vm, &mut builder, f64::NEG_INFINITY, 2);
+    let idx_nan = load_f64_const(&mut vm, &mut builder, f64::NAN, 3);
+    let idx_zero = load_f64_const(&mut vm, &mut builder, 0.0, 4);
+    let idx_negzero = load_f64_const(&mut vm, &mut builder, -0.0, 5);
     let bytecode = builder.build();
 
     let formatted = format_bytecode(&bytecode).expect("Should format successfully");
     let lines: Vec<&str> = formatted.lines().collect();
 
-    assert_eq!(lines[0], "0 LOAD_F64 r1, inf");
-    assert_eq!(lines[1], "10 LOAD_F64 r2, -inf");
-    assert_eq!(lines[2], "20 LOAD_F64 r3, NaN");
-    assert_eq!(lines[3], "30 LOAD_F64 r4, 0");
-    assert_eq!(lines[4], "40 LOAD_F64 r5, -0");
+    assert_eq!(lines[0], format!("0 LOAD_CONST_VALUE r1, {}", idx_inf));
+    assert_eq!(lines[1], format!("4 LOAD_CONST_VALUE r2, {}", idx_neginf));
+    assert_eq!(lines[2], format!("8 LOAD_CONST_VALUE r3, {}", idx_nan));
+    assert_eq!(lines[3], format!("12 LOAD_CONST_VALUE r4, {}", idx_zero));
+    assert_eq!(lines[4], format!("16 LOAD_CONST_VALUE r5, {}", idx_negzero));
 }
 
 #[test]
 fn test_format_with_labels_simulation() {
     // Simulate what bytecode with labels would look like after building
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
 
     let loop_start = builder.create_label();
     let loop_end = builder.create_label();
 
-    builder.load_i64(5, 1); // Counter
-    builder.load_i64(1, 2); // Accumulator  
+    load_i64_const(&mut vm, &mut builder, 5, 1); // Counter
+    load_i64_const(&mut vm, &mut builder, 1, 2); // Accumulator  
     builder.place_label(loop_start); // Loop start
     builder.gt_i64(1, 2, 3); // Compare
     builder.jump_if_false_to_label(3, loop_end);
@@ -578,7 +621,7 @@ fn test_format_with_labels_simulation() {
 
     // Just verify it doesn't crash and produces reasonable output
     assert!(!formatted.is_empty());
-    assert!(formatted.contains("LOAD_I64"));
+    assert!(formatted.contains("LOAD_CONST_VALUE"));
     assert!(formatted.contains("GT_I64"));
     assert!(
         formatted.contains("JUMP_FORWARD_IF_FALSE") || formatted.contains("JUMP_BACKWARD_IF_FALSE")
@@ -588,8 +631,9 @@ fn test_format_with_labels_simulation() {
 
 #[test]
 fn test_format_output_ends_with_newline() {
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
-    builder.load_i64(42, 1);
+    load_i64_const(&mut vm, &mut builder, 42, 1);
     let bytecode = builder.build();
 
     let formatted = format_bytecode(&bytecode).expect("Should format successfully");
@@ -601,8 +645,9 @@ fn test_format_output_ends_with_newline() {
 #[test]
 fn test_format_consistent_with_print_bytecode() {
     // This test ensures that format_bytecode and print_bytecode produce the same output
+    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
-    builder.load_i64(123, 1);
+    load_i64_const(&mut vm, &mut builder, 123, 1);
     builder.add_i64(1, 1, 2);
     let bytecode = builder.build();
 
@@ -610,7 +655,7 @@ fn test_format_consistent_with_print_bytecode() {
 
     // Since we can't easily capture print! output in tests, we just verify
     // that format_bytecode produces reasonable output
-    assert!(formatted.contains("LOAD_I64 r1, 123"));
+    assert!(formatted.contains("LOAD_CONST_VALUE r1"));
     assert!(formatted.contains("ADD_I64 r1, r1, r2"));
     assert!(formatted.contains("pc="));
     assert!(formatted.contains("bytecode.len()="));
