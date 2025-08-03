@@ -6,10 +6,6 @@ fn add_i64(vm: &mut VirtualMachine, value: i64) -> u16 {
     vm.const_pool.add_value("", value as u64, ValueType::I64) as u16
 }
 
-fn add_f64(vm: &mut VirtualMachine, value: f64) -> u16 {
-    vm.const_pool.add_value("", value.to_bits(), ValueType::F64) as u16
-}
-
 fn load_i64_const(vm: &mut VirtualMachine, builder: &mut BytecodeBuilder, value: i64, reg: u8) {
     let idx = add_i64(vm, value);
     builder.load_const_value(idx, reg);

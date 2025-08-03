@@ -67,7 +67,6 @@ fn test_format_negative_i64() {
 
 #[test]
 fn test_format_add_i64() {
-    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.add_i64(1, 2, 3);
     let bytecode = builder.build();
@@ -82,7 +81,6 @@ fn test_format_add_i64() {
 
 #[test]
 fn test_format_sub_i64() {
-    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.sub_i64(5, 6, 7);
     let bytecode = builder.build();
@@ -95,7 +93,6 @@ fn test_format_sub_i64() {
 
 #[test]
 fn test_format_mul_i64() {
-    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.mul_i64(10, 11, 12);
     let bytecode = builder.build();
@@ -108,7 +105,6 @@ fn test_format_mul_i64() {
 
 #[test]
 fn test_format_gt_i64() {
-    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.gt_i64(20, 21, 22);
     let bytecode = builder.build();
@@ -121,7 +117,6 @@ fn test_format_gt_i64() {
 
 #[test]
 fn test_format_gte_i64() {
-    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.gte_i64(1, 2, 3);
     let bytecode = builder.build();
@@ -134,7 +129,6 @@ fn test_format_gte_i64() {
 
 #[test]
 fn test_format_lt_i64() {
-    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.lt_i64(4, 5, 6);
     let bytecode = builder.build();
@@ -147,7 +141,6 @@ fn test_format_lt_i64() {
 
 #[test]
 fn test_format_lte_i64() {
-    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.lte_i64(7, 8, 9);
     let bytecode = builder.build();
@@ -190,7 +183,6 @@ fn test_format_load_const_slice() {
 
 #[test]
 fn test_format_add_f64() {
-    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.add_f64(1, 2, 3);
     let bytecode = builder.build();
@@ -203,7 +195,6 @@ fn test_format_add_f64() {
 
 #[test]
 fn test_format_sub_f64() {
-    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.sub_f64(4, 5, 6);
     let bytecode = builder.build();
@@ -216,7 +207,6 @@ fn test_format_sub_f64() {
 
 #[test]
 fn test_format_mul_f64() {
-    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.mul_f64(7, 8, 9);
     let bytecode = builder.build();
@@ -229,7 +219,6 @@ fn test_format_mul_f64() {
 
 #[test]
 fn test_format_gt_f64() {
-    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.gt_f64(15, 16, 17);
     let bytecode = builder.build();
@@ -242,7 +231,6 @@ fn test_format_gt_f64() {
 
 #[test]
 fn test_format_gte_f64() {
-    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.gte_f64(1, 2, 3);
     let bytecode = builder.build();
@@ -255,7 +243,6 @@ fn test_format_gte_f64() {
 
 #[test]
 fn test_format_lt_f64() {
-    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.lt_f64(4, 5, 6);
     let bytecode = builder.build();
@@ -268,7 +255,6 @@ fn test_format_lt_f64() {
 
 #[test]
 fn test_format_lte_f64() {
-    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.lte_f64(7, 8, 9);
     let bytecode = builder.build();
@@ -281,7 +267,6 @@ fn test_format_lte_f64() {
 
 #[test]
 fn test_format_type_conversions() {
-    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.i64_to_f64(1, 2);
     builder.f64_to_i64(3, 4);
@@ -322,7 +307,7 @@ fn test_format_jump_forward_if_true() {
     let mut builder = BytecodeBuilder::new();
     let idx1 = load_i64_const(&mut vm, &mut builder, 1, 1);
     let target_pos = builder.jump_forward_if_true(1);
-    let idx100 = load_i64_const(&mut vm, &mut builder, 100, 2);
+    load_i64_const(&mut vm, &mut builder, 100, 2);
     let end_pos = builder.current_pos();
     builder.patch_target(target_pos, end_pos - target_pos);
     let bytecode = builder.build();
@@ -369,7 +354,6 @@ fn test_format_jump_backward_if_true() {
 
 #[test]
 fn test_format_jmp() {
-    let mut vm = VirtualMachine::new();
     let mut builder = BytecodeBuilder::new();
     builder.jmp_to(42);
     let bytecode = builder.build();
