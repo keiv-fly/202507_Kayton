@@ -35,6 +35,16 @@ impl Registers {
         }
     }
 
+    pub fn ensure_len(&mut self, len: usize) {
+        if len <= Self::FIXED_COUNT {
+            return;
+        }
+        let spill_needed = len - Self::FIXED_COUNT;
+        if spill_needed > self.spill.len() {
+            self.spill.resize(spill_needed, 0);
+        }
+    }
+
 }
 
 impl Default for Registers {

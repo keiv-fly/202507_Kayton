@@ -65,6 +65,11 @@ impl BytecodeBuilder {
         self.bytecode.extend_from_slice(&value.to_le_bytes());
     }
 
+    pub fn call_host(&mut self, reg_fn_index_and_base: u16) {
+        self.bytecode.push(CALL_HOST);
+        self.bytecode.extend_from_slice(&reg_fn_index_and_base.to_le_bytes());
+    }
+
     pub fn add_i64(&mut self, r1: u8, r2: u8, dst: u8) {
         self.bytecode.push(ADD_I64);
         self.bytecode.push(r1);
