@@ -10,6 +10,7 @@ pub enum ValueType {
     I64,
     F64,
     Bool,
+    FuncHost,
     // Add more types if needed
 }
 
