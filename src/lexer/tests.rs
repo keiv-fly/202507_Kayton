@@ -1,53 +1,71 @@
 use super::*;
 
 #[test]
-fn tokenize_assignment() {
-    let input = "x = 12\n";
+fn program1_tokens() {
+    let input = r#"
+x = 12
+x = x + 1
+print(x)
+"#;
     let tokens = Lexer::new(input).tokenize();
     assert_eq!(
         tokens,
         vec![
-            Token::Ident("x".to_string()),
-            Token::Equal,
-            Token::Int(12),
-            Token::Newline,
-            Token::EOF,
+            Stmt::Assign {
+                name: "x".to_string(),
+                expr: Expr::Int(12),
+            },
+            Stmt::Assign {
+                name: "x".to_string(),
+                expr: Expr::Binary {
+                    left: Box::new(Expr::Ident("x".to_string())),
+                    op: BinOp::Add,
+                    right: Box::new(Expr::Int(1)),
+                },
+            },
+            Stmt::ExprStmt(Expr::Call {
+                func: Box::new(Expr::Ident("print".to_string())),
+                args: vec![Expr::Ident("x".to_string())],
+            }),
         ]
     );
 }
 
 #[test]
-fn tokenize_print_call() {
-    let input = r#"print("hi")"#;
+fn program2_tokens() {
+    let input = r#"print("Hello, World")"#;
     let tokens = Lexer::new(input).tokenize();
     assert_eq!(
         tokens,
-        vec![
-            Token::Ident("print".to_string()),
-            Token::LParen,
-            Token::Str("hi".to_string()),
-            Token::RParen,
-            Token::EOF,
-        ]
+        vec![Stmt::ExprStmt(Expr::Call {
+            func: Box::new(Expr::Ident("print".to_string())),
+            args: vec![Expr::Str("Hello, World".to_string())],
+        }),]
     );
 }
 
 #[test]
-fn tokenize_fstring() {
-    let input = r#"print(f"{x}")"#;
+fn program3_tokens() {
+    let input = r#"
+x = 12
+print(f"{x}")
+"#;
     let tokens = Lexer::new(input).tokenize();
     assert_eq!(
         tokens,
         vec![
-            Token::Ident("print".to_string()),
-            Token::LParen,
-            Token::InterpolatedString(vec![
-                StringPart::Text("".to_string()),
-                StringPart::Expr(vec![Token::Ident("x".to_string())]),
-                StringPart::Text("".to_string()),
-            ]),
-            Token::RParen,
-            Token::EOF,
+            Stmt::Assign {
+                name: "x".to_string(),
+                expr: Expr::Int(12),
+            },
+            Stmt::ExprStmt(Expr::Call {
+                func: Box::new(Expr::Ident("print".to_string())),
+                args: vec![Expr::InterpolatedString(vec![
+                    StringPart::Text("".to_string()),
+                    StringPart::Expr(Box::new(Expr::Ident("x".to_string()))),
+                    StringPart::Text("".to_string()),
+                ])],
+            }),
         ]
     );
 }
