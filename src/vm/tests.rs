@@ -97,6 +97,26 @@ fn test_negative_numbers() {
 }
 
 #[test]
+fn test_register_base_offset() {
+    let mut vm = VirtualMachine::new();
+    let idx2 = add_i64(&mut vm, 2);
+    let idx3 = add_i64(&mut vm, 3);
+    let mut builder = BytecodeBuilder::new();
+    builder.load_const_value(idx2, 0);
+    builder.load_const_value(idx3, 1);
+    builder.add_i64(0, 1, 2);
+    let bytecode = builder.build();
+
+    vm.base = 5;
+    vm.registers.ensure_len(5 + 3);
+
+    vm.eval_program(&bytecode).unwrap();
+
+    assert_eq!(vm.get_register_i64(7), 5);
+    assert_eq!(vm.get_register_i64(2), 0);
+}
+
+#[test]
 fn test_mixed_arithmetic() {
     let mut vm = VirtualMachine::new();
     let idx10 = add_i64(&mut vm, 10);
