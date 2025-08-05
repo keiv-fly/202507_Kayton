@@ -1,5 +1,4 @@
 use super::registers::Registers;
-use super::VirtualMachine;
 
 pub type HostFn = fn(base: usize, registers: &mut Registers) -> Result<(), String>;
 
@@ -48,15 +47,3 @@ pub enum CallInfo {
     CallHost { base: usize, top: usize, host_fn_index: usize },
 }
 
-impl VirtualMachine {
-    pub fn current_base(&self) -> usize {
-        self.call_stack
-            .last()
-            .map(|info| match info {
-                CallInfo::Global { base, .. } => *base,
-                CallInfo::Call { base, .. } => *base,
-                CallInfo::CallHost { base, .. } => *base,
-            })
-            .unwrap_or(0)
-    }
-}

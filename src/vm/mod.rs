@@ -14,7 +14,7 @@ mod tests_call;
 pub use bytecode_builder::BytecodeBuilder;
 pub use print_bytecode::print_bytecode;
 pub use registers::Registers;
-pub use call::{HostFn, HostFunctionMetadata, HostFunctionRegistry, CallInfo};
+pub use call::{HostFunctionRegistry, CallInfo};
 
 use const_pool::ConstPool;
 use std::fmt;
@@ -80,6 +80,7 @@ pub struct VirtualMachine {
     pub const_pool: ConstPool,
     pub host_functions: HostFunctionRegistry,
     pub call_stack: Vec<CallInfo>,
+    pub base: usize,
 }
 
 impl VirtualMachine {
@@ -89,6 +90,7 @@ impl VirtualMachine {
             const_pool: ConstPool::new(),
             host_functions: HostFunctionRegistry::new(),
             call_stack: vec![CallInfo::Global { base: 0, top: 0 }],
+            base: 0,
         }
     }
 
@@ -455,7 +457,7 @@ impl VirtualMachine {
                 }
                 let reg_index = self.read_u16(bytecode, *pc)? as usize;
                 *pc += 2;
-                let abs_index = self.current_base() + reg_index;
+                let abs_index = self.base + reg_index;
                 let fn_index = self.registers.get(abs_index) as usize;
                 let func = self
                     .host_functions
@@ -471,9 +473,19 @@ impl VirtualMachine {
                 let top = base + meta.num_registers.saturating_sub(1);
                 self.call_stack
                     .push(CallInfo::CallHost { base, top, host_fn_index: fn_index });
+                self.base = base;
                 self.registers.ensure_len(top + 1);
                 let result = func(base, &mut self.registers);
                 self.call_stack.pop();
+                if let Some(info) = self.call_stack.last() {
+                    self.base = match info {
+                        CallInfo::Global { base, .. } => *base,
+                        CallInfo::Call { base, .. } => *base,
+                        CallInfo::CallHost { base, .. } => *base,
+                    };
+                } else {
+                    self.base = 0;
+                }
                 if let Err(err) = result {
                     return Err(VmError::HostError(err));
                 }
