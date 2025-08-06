@@ -17,7 +17,7 @@ pub use bytecode_builder::BytecodeBuilder;
 pub use print_bytecode::print_bytecode;
 pub use registers::Registers;
 pub use call::{HostFunctionRegistry, CallInfo};
-pub use global_vars::GlobalVars;
+pub use global_vars::{GlobalVars, GlobalVarType, PtrType};
 
 use const_pool::ConstPool;
 use std::fmt;
