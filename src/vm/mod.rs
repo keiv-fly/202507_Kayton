@@ -1,5 +1,6 @@
 mod bytecode_builder;
 pub mod const_pool;
+mod global_vars;
 mod print_bytecode;
 mod registers;
 mod call;
@@ -10,11 +11,13 @@ mod tests_const_pool;
 mod tests_print_bytecode;
 mod tests_registers;
 mod tests_call;
+mod tests_global_vars;
 
 pub use bytecode_builder::BytecodeBuilder;
 pub use print_bytecode::print_bytecode;
 pub use registers::Registers;
 pub use call::{HostFunctionRegistry, CallInfo};
+pub use global_vars::GlobalVars;
 
 use const_pool::ConstPool;
 use std::fmt;
@@ -81,6 +84,7 @@ pub struct VirtualMachine {
     pub host_functions: HostFunctionRegistry,
     pub call_stack: Vec<CallInfo>,
     pub base: usize,
+    pub global_vars: GlobalVars,
 }
 
 impl VirtualMachine {
@@ -91,6 +95,7 @@ impl VirtualMachine {
             host_functions: HostFunctionRegistry::new(),
             call_stack: vec![CallInfo::Global { base: 0, top: 0 }],
             base: 0,
+            global_vars: GlobalVars::new(),
         }
     }
 
