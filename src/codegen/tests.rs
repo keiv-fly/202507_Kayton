@@ -1,7 +1,7 @@
 use super::*;
 use crate::lexer::Lexer;
 use crate::parser::Parser;
-use crate::vm::{Registers, VirtualMachine};
+use crate::vm::{Registers, VirtualMachine, GlobalVarType};
 use crate::vm::const_pool::ValueType;
 use std::sync::{Mutex, OnceLock};
 
@@ -73,4 +73,20 @@ fn program2_codegen() {
 
     let out = output().lock().unwrap().clone();
     assert_eq!(out, vec!["Hello, World".to_string()]);
+}
+
+#[test]
+fn populates_global_vars() {
+    let _guard = TEST_MUTEX.lock().unwrap();
+    let src = r#"x = 1"#;
+    let tokens = Lexer::new(src).tokenize();
+    let mut parser = Parser::new(tokens);
+    let stmts = parser.parse_program();
+
+    let (mut vm, print_const) = setup_vm();
+    generate_bytecode(&stmts, &mut vm, print_const);
+
+    let var = vm.global_vars.get("x").expect("global var x");
+    assert_eq!(var.register_id, 1);
+    assert!(matches!(var.meta.typ, GlobalVarType::Value(ValueType::I64)));
 }

@@ -1,5 +1,5 @@
 use crate::parser::{Expr, Stmt, BinOp};
-use crate::vm::{BytecodeBuilder, VirtualMachine};
+use crate::vm::{BytecodeBuilder, VirtualMachine, GlobalVarType, PtrType};
 use crate::vm::const_pool::{SliceType, ValueType};
 use std::collections::HashMap;
 
@@ -47,6 +47,14 @@ impl<'a> CodeGenerator<'a> {
                 });
                 let (_r, kind) = self.gen_expr(expr, Some(reg));
                 self.types.insert(name.clone(), kind);
+
+                let gv_type = match kind {
+                    ValueKind::Int => GlobalVarType::Value(ValueType::I64),
+                    ValueKind::Str => GlobalVarType::Ptr(PtrType::Slice(SliceType::Utf8Str)),
+                };
+                self.vm
+                    .global_vars
+                    .insert(name, reg as usize, gv_type);
             }
             Stmt::ExprStmt(expr) => {
                 if let Expr::Call { func, args } = expr {
