@@ -3,6 +3,7 @@ pub mod const_pool;
 mod global_vars;
 mod print_bytecode;
 mod registers;
+mod register_types;
 mod call;
 mod tests;
 mod tests_bytecode_builder;
@@ -16,6 +17,7 @@ mod tests_global_vars;
 pub use bytecode_builder::BytecodeBuilder;
 pub use print_bytecode::print_bytecode;
 pub use registers::Registers;
+pub use register_types::{RegisterTypes, RegisterType};
 pub use call::{HostFunctionRegistry, CallInfo};
 pub use global_vars::{GlobalVars, GlobalVarType, PtrType};
 
@@ -80,6 +82,7 @@ impl std::error::Error for VmError {}
 
 pub struct VirtualMachine {
     pub registers: Registers,
+    pub registers_type: RegisterTypes,
     pub const_pool: ConstPool,
     pub host_functions: HostFunctionRegistry,
     pub call_stack: Vec<CallInfo>,
@@ -91,6 +94,7 @@ impl VirtualMachine {
     pub fn new() -> Self {
         Self {
             registers: Registers::new(),
+            registers_type: RegisterTypes::new(),
             const_pool: ConstPool::new(),
             host_functions: HostFunctionRegistry::new(),
             call_stack: vec![CallInfo::Global { base: 0, top: 0 }],
@@ -455,6 +459,15 @@ impl VirtualMachine {
                 let len = slice.len() as u64;
                 self.registers.set(dst, ptr);
                 self.registers.set(dst + 1, len);
+                if let Some(meta) = self.const_pool.slice_metadata.get(index) {
+                    use const_pool::SliceType;
+                    if let SliceType::Utf8Str = meta.typ {
+                        self.registers_type
+                            .set(dst, RegisterType::ConstSliceVarMain);
+                        self.registers_type
+                            .set(dst + 1, RegisterType::ConstSliceVarLen);
+                    }
+                }
             }
             CALL_HOST => {
                 if *pc + 1 >= bytecode.len() {
@@ -480,6 +493,7 @@ impl VirtualMachine {
                     .push(CallInfo::CallHost { base, top, host_fn_index: fn_index });
                 self.base = base;
                 self.registers.ensure_len(top + 1);
+                self.registers_type.ensure_len(top + 1);
                 let result = func(base, &mut self.registers);
                 self.call_stack.pop();
                 if let Some(info) = self.call_stack.last() {
@@ -568,6 +582,16 @@ impl VirtualMachine {
     /// Set raw register value
     pub fn set_register_raw(&mut self, reg: usize, value: u64) {
         self.registers.set(reg, value);
+    }
+
+    /// Get register type
+    pub fn get_register_type(&self, reg: usize) -> RegisterType {
+        self.registers_type.get(reg)
+    }
+
+    /// Set register type
+    pub fn set_register_type(&mut self, reg: usize, typ: RegisterType) {
+        self.registers_type.set(reg, typ);
     }
 }
 

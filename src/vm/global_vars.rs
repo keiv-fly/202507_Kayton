@@ -2,23 +2,23 @@ use std::collections::HashMap;
 
 use super::const_pool::{SliceType, ValueType};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PtrType {
     Slice(SliceType),
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GlobalVarType {
     Value(ValueType),
     Ptr(PtrType),
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct GlobalVarMeta {
     pub typ: GlobalVarType,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct GlobalVar {
     pub register_id: usize,
     pub meta: GlobalVarMeta,
