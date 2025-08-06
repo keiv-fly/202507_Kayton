@@ -5,7 +5,7 @@ use std::collections::HashMap;
 // Value constants
 //
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ValueType {
     I64,
     F64,
@@ -25,7 +25,7 @@ pub struct ValueConstMeta {
 // Slice constants
 //
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SliceType {
     Utf8Str,
     Binary,

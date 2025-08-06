@@ -1,5 +1,5 @@
 use super::const_pool::{SliceType, ValueType};
-use super::{BytecodeBuilder, VirtualMachine};
+use super::{BytecodeBuilder, VirtualMachine, RegisterType};
 
 #[test]
 fn test_load_const_value_and_slice() {
@@ -24,4 +24,12 @@ fn test_load_const_value_and_slice() {
     let len = vm.get_register_raw(2) as usize;
     let data = unsafe { std::slice::from_raw_parts(ptr, len) };
     assert_eq!(data, vm.const_pool.get_slice("hello").unwrap());
+    assert_eq!(
+        vm.get_register_type(1),
+        RegisterType::ConstSliceVarMain
+    );
+    assert_eq!(
+        vm.get_register_type(2),
+        RegisterType::ConstSliceVarLen
+    );
 }
