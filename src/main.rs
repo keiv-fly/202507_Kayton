@@ -1,8 +1,5 @@
-mod vm;
-mod write;
-mod lexer;
-mod parser;
-mod codegen;
+use kayton::write;
+
 fn main() {
-    write::println_to_console(b"Hello, World!");
+    write::println_to_console(b"Hello, World!\n");
 }

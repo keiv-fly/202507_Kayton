@@ -3,6 +3,10 @@ name = "kayton"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+name = "kayton"
+path = "src/lib.rs"
+
 [dependencies]
 windows-sys = { version = "0.60.2", features = [
     "Win32",
@@ -14,3 +18,9 @@ windows-sys = { version = "0.60.2", features = [
 ] }
 libc = "0.2"
 bumpalo = "3.19.0"
+
+[workspace]
+members = [
+    ".",
+    "vec_host",
+]

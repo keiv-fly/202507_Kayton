@@ -1,5 +1,5 @@
-use super::*;
 use super::const_pool::ValueType;
+use super::*;
 use std::time::Duration;
 
 fn add_i64(vm: &mut VirtualMachine, value: i64) -> u16 {
@@ -240,7 +240,8 @@ fn test_i64_comparison_ops() {
 
     let bytecode = builder.build();
 
-    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1))).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     assert_eq!(vm.get_register_i64(0), 1);
     assert_eq!(vm.get_register_i64(3), 0);
     assert_eq!(vm.get_register_i64(4), 1);
@@ -261,7 +262,8 @@ fn test_f64_comparison_ops() {
 
     let bytecode = builder.build();
 
-    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1))).unwrap();
+    vm.eval_program_with_timeout(&bytecode, Some(Duration::from_secs(1)))
+        .unwrap();
     assert_eq!(vm.get_register_i64(0), 0);
     assert_eq!(vm.get_register_i64(3), 1);
     assert_eq!(vm.get_register_i64(4), 1);

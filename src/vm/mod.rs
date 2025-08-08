@@ -1,25 +1,25 @@
 mod bytecode_builder;
+mod call;
 pub mod const_pool;
 mod global_vars;
 mod print_bytecode;
-mod registers;
 mod register_types;
-mod call;
+mod registers;
 mod tests;
 mod tests_bytecode_builder;
+mod tests_call;
 mod tests_const_opcodes;
 mod tests_const_pool;
+mod tests_global_vars;
 mod tests_print_bytecode;
 mod tests_registers;
-mod tests_call;
-mod tests_global_vars;
 
 pub use bytecode_builder::BytecodeBuilder;
+pub use call::{CallInfo, HostFunctionMetadata, HostFunctionRegistry};
+pub use global_vars::{GlobalVarType, GlobalVars, PtrType};
 pub use print_bytecode::print_bytecode;
+pub use register_types::{RegisterType, RegisterTypes};
 pub use registers::Registers;
-pub use register_types::{RegisterTypes, RegisterType};
-pub use call::{HostFunctionRegistry, CallInfo};
-pub use global_vars::{GlobalVars, GlobalVarType, PtrType};
 
 use const_pool::ConstPool;
 use std::fmt;
@@ -489,8 +489,11 @@ impl VirtualMachine {
                     .ok_or(VmError::InvalidConstIndex(fn_index))?;
                 let base = abs_index;
                 let top = base + meta.num_registers.saturating_sub(1);
-                self.call_stack
-                    .push(CallInfo::CallHost { base, top, host_fn_index: fn_index });
+                self.call_stack.push(CallInfo::CallHost {
+                    base,
+                    top,
+                    host_fn_index: fn_index,
+                });
                 self.base = base;
                 self.registers.ensure_len(top + 1);
                 self.registers_type.ensure_len(top + 1);

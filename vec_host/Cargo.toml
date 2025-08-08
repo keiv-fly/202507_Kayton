@@ -1,0 +1,12 @@
+[package]
+name = "vec_host"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "vec_host"
+crate-type = ["rlib", "dylib"]
+
+[dependencies]
+kayton = { path = ".." }
+
