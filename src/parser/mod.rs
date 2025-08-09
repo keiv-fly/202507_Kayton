@@ -1,4 +1,4 @@
-use crate::lexer::{Lexer, Token, FStringPart};
+use crate::lexer::{FStringPart, Lexer, Token};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
@@ -184,4 +184,5 @@ fn parse_embedded_expr(src: &str) -> Expr {
     parser.parse_expr()
 }
 
+#[cfg(test)]
 mod tests;

@@ -14,7 +14,7 @@ fn read_ptr(reg: u64) -> Result<NonNull<Vec<u64>>, String> {
 }
 
 #[unsafe(no_mangle)]
-pub fn vec_new(registers: &mut [u64]) -> Result<(), String> {
+pub fn vec_host_new(registers: &mut [u64]) -> Result<(), String> {
     let v: Box<Vec<u64>> = Box::new(Vec::new());
     let ptr = Box::into_raw(v) as u64;
     if let Some(r0) = registers.get_mut(0) {
@@ -30,7 +30,7 @@ pub fn vec_new(registers: &mut [u64]) -> Result<(), String> {
 }
 
 #[unsafe(no_mangle)]
-pub fn vec_drop(registers: &mut [u64]) -> Result<(), String> {
+pub fn vec_host_drop(registers: &mut [u64]) -> Result<(), String> {
     if registers.len() < 2 {
         return Err("insufficient registers".to_string());
     }
@@ -47,7 +47,7 @@ pub fn vec_drop(registers: &mut [u64]) -> Result<(), String> {
 
 // append(vec_ptr, value)
 #[unsafe(no_mangle)]
-pub fn vec_append(registers: &mut [u64]) -> Result<(), String> {
+pub fn vec_host_append(registers: &mut [u64]) -> Result<(), String> {
     if registers.len() < 3 {
         return Err("insufficient registers".to_string());
     }
@@ -66,7 +66,7 @@ pub fn vec_append(registers: &mut [u64]) -> Result<(), String> {
 
 // get(vec_ptr, index) -> value
 #[unsafe(no_mangle)]
-pub fn vec_get(registers: &mut [u64]) -> Result<(), String> {
+pub fn vec_host_get(registers: &mut [u64]) -> Result<(), String> {
     if registers.len() < 3 {
         return Err("insufficient registers".to_string());
     }
@@ -88,7 +88,7 @@ pub fn vec_get(registers: &mut [u64]) -> Result<(), String> {
 
 // set(vec_ptr, index, value)
 #[unsafe(no_mangle)]
-pub fn vec_set(registers: &mut [u64]) -> Result<(), String> {
+pub fn vec_host_set(registers: &mut [u64]) -> Result<(), String> {
     if registers.len() < 4 {
         return Err("insufficient registers".to_string());
     }
@@ -110,7 +110,7 @@ pub fn vec_set(registers: &mut [u64]) -> Result<(), String> {
 
 // len(vec_ptr) -> len
 #[unsafe(no_mangle)]
-pub fn vec_len(registers: &mut [u64]) -> Result<(), String> {
+pub fn vec_host_len(registers: &mut [u64]) -> Result<(), String> {
     if registers.len() < 2 {
         return Err("insufficient registers".to_string());
     }
@@ -125,58 +125,58 @@ pub fn vec_len(registers: &mut [u64]) -> Result<(), String> {
 }
 
 #[unsafe(no_mangle)]
-pub fn meta_data() -> HashMap<&'static str, HostFunctionMetadata> {
+pub fn vec_host_meta_data() -> HashMap<&'static str, HostFunctionMetadata> {
     let mut m = HashMap::new();
     // name, num_return_registers, num_params, num_registers
     m.insert(
-        "vec_new",
+        "vec_host_new",
         HostFunctionMetadata {
-            name: "vec_new",
+            name: "vec_host_new",
             num_return_registers: 1,
             num_params: 0,
             num_registers: 1,
         },
     );
     m.insert(
-        "vec_drop",
+        "vec_host_drop",
         HostFunctionMetadata {
-            name: "vec_drop",
+            name: "vec_host_drop",
             num_return_registers: 1,
             num_params: 1,
             num_registers: 2,
         },
     );
     m.insert(
-        "vec_append",
+        "vec_host_append",
         HostFunctionMetadata {
-            name: "vec_append",
+            name: "vec_host_append",
             num_return_registers: 1,
             num_params: 2,
             num_registers: 3,
         },
     );
     m.insert(
-        "vec_get",
+        "vec_host_get",
         HostFunctionMetadata {
-            name: "vec_get",
+            name: "vec_host_get",
             num_return_registers: 1,
             num_params: 2,
             num_registers: 3,
         },
     );
     m.insert(
-        "vec_set",
+        "vec_host_set",
         HostFunctionMetadata {
-            name: "vec_set",
+            name: "vec_host_set",
             num_return_registers: 1,
             num_params: 3,
             num_registers: 4,
         },
     );
     m.insert(
-        "vec_len",
+        "vec_host_len",
         HostFunctionMetadata {
-            name: "vec_len",
+            name: "vec_host_len",
             num_return_registers: 1,
             num_params: 1,
             num_registers: 2,

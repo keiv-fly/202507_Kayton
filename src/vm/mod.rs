@@ -5,13 +5,21 @@ mod global_vars;
 mod print_bytecode;
 mod register_types;
 mod registers;
+#[cfg(test)]
 mod tests;
+#[cfg(test)]
 mod tests_bytecode_builder;
+#[cfg(test)]
 mod tests_call;
+#[cfg(test)]
 mod tests_const_opcodes;
+#[cfg(test)]
 mod tests_const_pool;
+#[cfg(test)]
 mod tests_global_vars;
+#[cfg(test)]
 mod tests_print_bytecode;
+#[cfg(test)]
 mod tests_registers;
 
 pub use bytecode_builder::BytecodeBuilder;
@@ -23,7 +31,7 @@ pub use registers::Registers;
 
 use const_pool::ConstPool;
 use std::fmt;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 // Instruction opcodes
 pub const ADD_I64: u8 = 0x03;
@@ -57,7 +65,7 @@ pub enum VmError {
     InvalidJumpTarget(usize),
     InvalidConstIndex(usize),
     UnexpectedEndOfProgram,
-    Timeout(Duration),
+    Timeout(std::time::Duration),
     HostError(String),
     // InvalidRegister(u8),
 }
@@ -529,7 +537,7 @@ impl VirtualMachine {
     pub fn eval_program_with_timeout(
         &mut self,
         bytecode: &[u8],
-        timeout: Option<Duration>,
+        timeout: Option<std::time::Duration>,
     ) -> Result<(), VmError> {
         let mut pc = 0usize;
         let start_time = Instant::now();

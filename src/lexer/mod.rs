@@ -28,7 +28,9 @@ pub struct Lexer<'a> {
 
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
-        Self { chars: input.chars().peekable() }
+        Self {
+            chars: input.chars().peekable(),
+        }
     }
 
     /// Tokenize the input. The resulting token stream will always end with `Token::EOF`.
@@ -184,4 +186,5 @@ impl<'a> Lexer<'a> {
     }
 }
 
+#[cfg(test)]
 mod tests;
